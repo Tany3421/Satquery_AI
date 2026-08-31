@@ -1,0 +1,27 @@
+# Environment variables / secrets
+.env
+*.env
+backend/.env
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+database/*.db
+
+# Uploaded files
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# IDE & OS files
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SatQuery AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1a;
+    --panel: #0f1729;
+    --panel-line: #1c2740;
+    --ink: #dbe4f5;
+    --ink-dim: #7c8aa8;
+    --teal: #4fd8c4;
+    --teal-dim: #2a5f57;
+    --amber: #f0a94e;
+    --danger: #e0654f;
+    --grid: rgba(79, 216, 196, 0.06);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 32px 32px,
+      var(--bg);
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  header {
+    border-bottom: 1px solid var(--panel-line);
+    padding: 18px 28px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  header .brand { display: flex; align-items: center; gap: 10px; }
+  header .brand .dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--teal);
+    box-shadow: 0 0 8px var(--teal);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+  header h1 { font-size: 19px; font-weight: 700; letter-spacing: 0.02em; margin: 0; }
+  header .sub {
+    font-size: 11px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  header .code { font-size: 11px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; }
+
+  nav.tabs {
+    max-width: 1180px; margin: 0 auto; padding: 16px 28px 0;
+    display: flex; gap: 6px;
+  }
+  nav.tabs button {
+    background: transparent; border: 1px solid var(--panel-line); color: var(--ink-dim);
+    padding: 8px 16px; border-radius: 6px 6px 0 0; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  nav.tabs button.active { color: var(--teal); border-color: var(--teal-dim); border-bottom-color: transparent; background: var(--panel); }
+
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 28px 28px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 20px;
+  }
+  main.view { padding-top: 0; }
+  @media (max-width: 880px) { main { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: 10px;
+    padding: 20px;
+    position: relative;
+  }
+  .panel::before, .panel::after {
+    content: ""; position: absolute; width: 14px; height: 14px;
+  }
+  .panel::before { top: -1px; left: -1px; border-top: 2px solid var(--teal); border-left: 2px solid var(--teal); border-top-left-radius: 8px; opacity:0.6; }
+  .panel::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--teal); border-right: 2px solid var(--teal); border-bottom-right-radius: 8px; opacity:0.6; }
+
+  .panel h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--teal); margin: 0 0 14px 0; font-family: 'JetBrains Mono', monospace;
+  }
+
+  select, textarea {
+    width: 100%;
+    background: #0a0f1a; border: 1px solid var(--panel-line); border-radius: 6px;
+    color: var(--ink); padding: 10px 12px; font-family: inherit; font-size: 14px;
+  }
+  select { font-family: 'JetBrains Mono', monospace; font-size: 12px; cursor: pointer; }
+  textarea { resize: vertical; min-height: 64px; margin-top: 10px; }
+  select:focus, textarea:focus { outline: none; border-color: var(--teal); }
+  label.field-label { font-size: 11px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; display:block; margin-bottom:6px; }
+
+  .dropzone {
+    border: 1.5px dashed var(--panel-line);
+    border-radius: 8px;
+    min-height: 200px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    text-align: center;
+    padding: 16px;
+    overflow: hidden;
+    position: relative;
+  }
+  .dropzone:hover { border-color: var(--teal-dim); }
+  .dropzone.has-image { border-style: solid; }
+  .dropzone img { max-width: 100%; max-height: 280px; border-radius: 4px; display: block; }
+  .dropzone .hint { color: var(--ink-dim); font-size: 13px; }
+  .dropzone .hint-sm { color: var(--ink-dim); font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+  input[type=file] { display: none; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+
+  .quick-qs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .quick-qs button {
+    background: transparent; border: 1px solid var(--panel-line); color: var(--ink-dim);
+    font-size: 11px; padding: 5px 9px; border-radius: 100px; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .quick-qs button:hover { border-color: var(--teal); color: var(--teal); }
+
+  .primary-btn {
+    margin-top: 14px; width: 100%; background: var(--teal); color: #06110f;
+    border: none; border-radius: 6px; padding: 12px; font-weight: 700; font-size: 14px;
+    cursor: pointer; letter-spacing: 0.01em;
+  }
+  .primary-btn:hover { background: #6ee6d4; }
+  .primary-btn:disabled { background: var(--panel-line); color: var(--ink-dim); cursor: not-allowed; }
+
+  .answer-box { font-size: 14.5px; line-height: 1.6; color: var(--ink); }
+  .empty-state { color: var(--ink-dim); font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+
+  .section-label { font-size: 11px; color: var(--ink-dim); font-family:'JetBrains Mono',monospace; text-transform: uppercase; margin-top: 16px; margin-bottom: 8px; }
+
+  .bar-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 12px; }
+  .bar-label { width: 90px; flex-shrink: 0; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; }
+  .bar-track { flex: 1; background: #0a0f1a; border-radius: 4px; height: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--teal-dim), var(--teal)); }
+  .bar-pct { width: 34px; text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ink-dim); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 11px; padding: 4px 9px; border-radius: 5px;
+    background: rgba(240, 169, 78, 0.1); color: var(--amber);
+    border: 1px solid rgba(240, 169, 78, 0.25); font-family: 'JetBrains Mono', monospace;
+  }
+
+  .evidence-list { list-style: none; margin: 0; padding: 0; display:flex; flex-direction:column; gap:6px; }
+  .evidence-list li { font-size: 12.5px; color: var(--ink); display:flex; gap:8px; align-items:flex-start; }
+  .evidence-list li::before { content: "✓"; color: var(--teal); flex-shrink:0; }
+
+  .quality-row { display:flex; gap:10px; flex-wrap:wrap; margin-top: 4px; }
+  .badge { font-size: 11px; padding: 4px 9px; border-radius: 5px; font-family:'JetBrains Mono',monospace; border: 1px solid var(--panel-line); color: var(--ink-dim); }
+  .badge.good { color: var(--teal); border-color: var(--teal-dim); }
+  .badge.warn { color: var(--amber); border-color: rgba(240,169,78,0.3); }
+
+  .uncertainty-note {
+    margin-top: 10px; font-size: 12px; color: var(--amber);
+    background: rgba(240,169,78,0.08); border: 1px solid rgba(240,169,78,0.2);
+    padding: 8px 10px; border-radius: 6px;
+  }
+
+  .confidence-row { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--panel-line); }
+  .confidence-row .label { font-size: 11px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; }
+  .confidence-row .value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--teal); }
+
+  .region-note { margin-top: 10px; font-size: 12px; color: var(--ink-dim); font-style: italic; }
+
+  .report-btn {
+    margin-top: 14px; width: 100%; background: transparent; border: 1px solid var(--panel-line);
+    color: var(--ink-dim); border-radius: 6px; padding: 10px; font-size: 12px; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .report-btn:hover { border-color: var(--teal); color: var(--teal); }
+
+  .history { grid-column: 1 / -1; }
+  .history-item {
+    display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--panel-line);
+    font-size: 13px; align-items: center;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-item img { width: 48px; height: 48px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+  .history-item .q { color: var(--ink); }
+  .history-item .a { color: var(--ink-dim); font-size: 12px; margin-top: 2px; }
+  .history-item .meta { margin-left: auto; text-align: right; }
+  .history-item .t { font-size: 10px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+  .history-item .mode-tag { font-size: 10px; color: var(--teal); font-family: 'JetBrains Mono', monospace; }
+
+  .error-box {
+    background: rgba(224, 101, 79, 0.1); border: 1px solid rgba(224, 101, 79, 0.35);
+    color: var(--danger); padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-top: 12px;
+  }
+
+  .loading-line {
+    display: flex; align-items: center; gap: 8px; color: var(--teal); font-size: 12px;
+    font-family: 'JetBrains Mono', monospace; margin-top: 12px;
+  }
+  .loading-line .spinner {
+    width: 12px; height: 12px; border: 2px solid var(--teal-dim); border-top-color: var(--teal);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .anomaly-banner {
+    margin-top: 14px; padding: 10px 12px; border-radius: 6px; font-size: 13px;
+    background: rgba(224,101,79,0.1); border: 1px solid rgba(224,101,79,0.3); color: var(--danger);
+  }
+  .change-row { display:flex; justify-content:space-between; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--panel-line); }
+  .change-row:last-child { border-bottom:none; }
+  .change-row .cat { color: var(--ink); }
+  .change-row .dir { font-family:'JetBrains Mono',monospace; color: var(--ink-dim); }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(5,8,14,0.8); display:none;
+    align-items: center; justify-content: center; z-index: 50; padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: #0d1424; border: 1px solid var(--panel-line); border-radius: 10px;
+    max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 26px;
+  }
+  .modal h3 { margin: 0 0 4px 0; font-size: 16px; }
+  .modal .report-meta { font-size: 11px; color: var(--ink-dim); font-family:'JetBrains Mono',monospace; margin-bottom: 16px; }
+  .modal .report-row { margin-bottom: 14px; }
+  .modal .report-row .k { font-size: 10px; text-transform: uppercase; letter-spacing:0.08em; color: var(--teal); font-family:'JetBrains Mono',monospace; margin-bottom:4px; }
+  .modal .report-row .v { font-size: 13px; color: var(--ink); line-height: 1.5; }
+  .modal-close { margin-top: 10px; width: 100%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="dot"></div>
+    <div>
+      <h1>SatQuery AI</h1>
+      <div class="sub">Remote Sensing · Vision-Language Assistant</div>
+    </div>
+  </div>
+  <div class="code">SIH26167</div>
+</header>
+
+<nav class="tabs">
+  <button class="active" data-tab="analyze">Analyze</button>
+  <button data-tab="compare">Change Detection</button>
+</nav>
+
+<!-- ============= ANALYZE TAB ============= -->
+<main class="view" id="tab-analyze">
+  <section class="panel">
+    <h2>01 · Image + Query</h2>
+
+    <label class="field-label">Analysis mode</label>
+    <select id="modeSelect">
+      <option value="general">General</option>
+      <option value="agriculture">Agriculture</option>
+      <option value="disaster">Disaster</option>
+      <option value="urban">Urban</option>
+      <option value="environment">Environment</option>
+    </select>
+
+    <div style="margin-top:14px;">
+      <label class="field-label">Image</label>
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept="image/*" />
+        <div id="dropzoneContent">
+          <div class="hint">Click to upload a satellite / aerial image</div>
+          <div class="hint-sm">JPG · PNG · WEBP</div>
+        </div>
+      </label>
+    </div>
+
+    <label class="field-label" style="margin-top:14px;">Question</label>
+    <textarea id="questionInput" placeholder="e.g. What land cover types are visible in this image?"></textarea>
+    <div class="quick-qs">
+      <button data-q="What type of land cover is visible?">Land cover?</button>
+      <button data-q="Are there any water bodies in this image?">Water bodies?</button>
+      <button data-q="Where are the urban / built-up areas?">Urban areas?</button>
+      <button data-q="Is there significant vegetation or forest cover?">Vegetation?</button>
+      <button data-q="What notable objects or structures can you identify?">Objects?</button>
+    </div>
+
+    <button class="primary-btn" id="askBtn">Analyze Image</button>
+    <div id="loadingLine" style="display:none;" class="loading-line">
+      <div class="spinner"></div> Running vision-language analysis…
+    </div>
+    <div id="errorBox" style="display:none;" class="error-box"></div>
+  </section>
+
+  <section class="panel">
+    <h2>02 · Analysis</h2>
+    <div id="resultsEmpty" class="empty-state">Upload an image and ask a question to see results here.</div>
+
+    <div id="resultsContent" style="display:none;">
+      <div class="answer-box" id="answerText"></div>
+
+      <div class="section-label">Land Cover Breakdown</div>
+      <div id="landCoverBars"></div>
+
+      <div class="section-label">Detected Features</div>
+      <div class="chips" id="featureChips"></div>
+
+      <div class="section-label">Evidence</div>
+      <ul class="evidence-list" id="evidenceList"></ul>
+
+      <div class="quality-row" id="qualityRow"></div>
+      <div id="uncertaintyNote" style="display:none;" class="uncertainty-note"></div>
+      <div class="region-note" id="regionNote"></div>
+
+      <div class="confidence-row">
+        <div class="label">Model Confidence</div>
+        <div class="value" id="confidenceValue">—</div>
+      </div>
+
+      <button class="report-btn" id="reportBtn">Generate ISRO-Style Report</button>
+    </div>
+  </section>
+
+  <section class="panel history">
+    <h2>03 · Query History</h2>
+    <div id="historyEmpty" class="empty-state">No queries yet.</div>
+    <div id="historyList"></div>
+  </section>
+</main>
+
+<!-- ============= COMPARE TAB ============= -->
+<main class="view" id="tab-compare" style="display:none;">
+  <section class="panel">
+    <h2>Before / After Images</h2>
+    <div class="two-col">
+      <div>
+        <label class="field-label">Before</label>
+        <label class="dropzone" id="dropzoneBefore">
+          <input type="file" id="fileBefore" accept="image/*" />
+          <div id="dropzoneBeforeContent"><div class="hint-sm">Upload</div></div>
+        </label>
+        <textarea id="labelBefore" placeholder="Optional label, e.g. 2023" style="margin-top:8px; min-height:36px;"></textarea>
+      </div>
+      <div>
+        <label class="field-label">After</label>
+        <label class="dropzone" id="dropzoneAfter">
+          <input type="file" id="fileAfter" accept="image/*" />
+          <div id="dropzoneAfterContent"><div class="hint-sm">Upload</div></div>
+        </label>
+        <textarea id="labelAfter" placeholder="Optional label, e.g. 2026" style="margin-top:8px; min-height:36px;"></textarea>
+      </div>
+    </div>
+    <button class="primary-btn" id="compareBtn">Compare Images</button>
+    <div id="compareLoading" style="display:none;" class="loading-line">
+      <div class="spinner"></div> Running change detection…
+    </div>
+    <div id="compareError" style="display:none;" class="error-box"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Change Analysis</h2>
+    <div id="compareEmpty" class="empty-state">Upload two images of the same location to detect change.</div>
+    <div id="compareContent" style="display:none;">
+      <div class="answer-box" id="compareNarrative"></div>
+      <div id="anomalyBanner" style="display:none;" class="anomaly-banner"></div>
+      <div class="section-label">Detected Changes</div>
+      <div id="changesList"></div>
+      <div class="confidence-row">
+        <div class="label">Model Confidence</div>
+        <div class="value" id="compareConfidence">—</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ============= REPORT MODAL ============= -->
+<div class="modal-backdrop" id="reportModal">
+  <div class="modal">
+    <h3>Remote Sensing Analysis Report</h3>
+    <div class="report-meta" id="reportMeta"></div>
+    <div id="reportBody"></div>
+    <button class="primary-btn modal-close" id="closeReport">Close</button>
+  </div>
+</div>
+
+<script>
+  // EXTEND: point this at your deployed backend if it's not running on localhost:8000
+  const API_BASE = "http://localhost:8000";
+
+  // ---------- Tabs ----------
+  document.querySelectorAll("nav.tabs button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll("main.view").forEach((m) => (m.style.display = "none"));
+      document.getElementById(`tab-${btn.dataset.tab}`).style.display = "grid";
+    });
+  });
+
+  // ---------- Analyze tab ----------
+  let currentFile = null;
+  let currentImageId = null;
+
+  const dropzone = document.getElementById("dropzone");
+  const fileInput = document.getElementById("fileInput");
+  const dropzoneContent = document.getElementById("dropzoneContent");
+  const questionInput = document.getElementById("questionInput");
+  const modeSelect = document.getElementById("modeSelect");
+  const askBtn = document.getElementById("askBtn");
+  const loadingLine = document.getElementById("loadingLine");
+  const errorBox = document.getElementById("errorBox");
+
+  fileInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    currentFile = file;
+    currentImageId = null;
+    const url = URL.createObjectURL(file);
+    dropzoneContent.innerHTML = `<img src="${url}" alt="preview" />`;
+    dropzone.classList.add("has-image");
+  });
+
+  document.querySelectorAll(".quick-qs button").forEach((btn) => {
+    btn.addEventListener("click", () => { questionInput.value = btn.dataset.q; });
+  });
+
+  let lastQueryId = null;
+
+  askBtn.addEventListener("click", async () => {
+    errorBox.style.display = "none";
+    const question = questionInput.value.trim();
+
+    if (!currentFile && !currentImageId) { showError("Upload an image first."); return; }
+    if (!question) { showError("Type a question about the image."); return; }
+
+    const formData = new FormData();
+    formData.append("question", question);
+    formData.append("mode", modeSelect.value);
+    if (currentFile) formData.append("image", currentFile);
+    else formData.append("image_id", currentImageId);
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/analyze`, { method: "POST", body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Request failed (${res.status})`);
+      }
+      const data = await res.json();
+      currentImageId = data.image_id || currentImageId;
+      currentFile = null;
+      lastQueryId = data.id;
+      renderResult(data);
+      loadHistory();
+    } catch (err) {
+      showError(err.message || "Something went wrong. Is the backend running on :8000?");
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  function setLoading(on) { askBtn.disabled = on; loadingLine.style.display = on ? "flex" : "none"; }
+  function showError(msg) { errorBox.textContent = msg; errorBox.style.display = "block"; }
+
+  function renderResult(data) {
+    document.getElementById("resultsEmpty").style.display = "none";
+    document.getElementById("resultsContent").style.display = "block";
+    document.getElementById("answerText").textContent = data.answer;
+
+    const barsEl = document.getElementById("landCoverBars");
+    barsEl.innerHTML = "";
+    (data.land_cover || []).forEach((lc) => {
+      const row = document.createElement("div");
+      row.className = "bar-row";
+      row.innerHTML = `<div class="bar-label">${lc.label}</div><div class="bar-track"><div class="bar-fill" style="width:${lc.percent}%"></div></div><div class="bar-pct">${lc.percent}%</div>`;
+      barsEl.appendChild(row);
+    });
+
+    const chipsEl = document.getElementById("featureChips");
+    chipsEl.innerHTML = "";
+    (data.detected_features || []).forEach((f) => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = f;
+      chipsEl.appendChild(chip);
+    });
+
+    const evidenceEl = document.getElementById("evidenceList");
+    evidenceEl.innerHTML = "";
+    (data.evidence || []).forEach((ev) => {
+      const li = document.createElement("li");
+      li.textContent = ev;
+      evidenceEl.appendChild(li);
+    });
+
+    const qualityRow = document.getElementById("qualityRow");
+    qualityRow.innerHTML = "";
+    if (data.image_quality) {
+      const cls = data.image_quality === "Good" ? "good" : "warn";
+      qualityRow.innerHTML += `<span class="badge ${cls}">Quality: ${data.image_quality}</span>`;
+    }
+    if (data.cloud_cover_percent != null) {
+      const cls = data.cloud_cover_percent > 30 ? "warn" : "good";
+      qualityRow.innerHTML += `<span class="badge ${cls}">Cloud cover: ${data.cloud_cover_percent}%</span>`;
+    }
+
+    const uncertaintyEl = document.getElementById("uncertaintyNote");
+    if (data.uncertainty_reason) {
+      uncertaintyEl.style.display = "block";
+      uncertaintyEl.textContent = `⚠ ${data.uncertainty_reason}`;
+    } else {
+      uncertaintyEl.style.display = "none";
+    }
+
+    document.getElementById("regionNote").textContent = data.region_note || "";
+    document.getElementById("confidenceValue").textContent = data.confidence != null ? `${data.confidence}%` : "—";
+  }
+
+  document.getElementById("reportBtn").addEventListener("click", async () => {
+    if (!lastQueryId) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/report/${lastQueryId}`);
+      if (!res.ok) throw new Error("Could not generate report");
+      const report = await res.json();
+      showReport(report);
+    } catch (err) {
+      showError(err.message);
+    }
+  });
+
+  function showReport(report) {
+    document.getElementById("reportMeta").textContent =
+      `Generated ${new Date(report.generated_at).toLocaleString()} · Mode: ${report.mode}`;
+    const body = document.getElementById("reportBody");
+    const rows = [
+      ["Query", report.question],
+      ["Findings", report.findings],
+      ["Land Cover", (report.land_cover || []).map((l) => `${l.label} ${l.percent}%`).join(", ") || "—"],
+      ["Detected Features", (report.detected_features || []).join(", ") || "—"],
+      ["Evidence", (report.evidence || []).join("; ") || "—"],
+      ["Confidence", `${report.confidence}%`],
+      ["Image Quality", `${report.image_quality || "—"}${report.cloud_cover_percent != null ? ` (cloud cover ${report.cloud_cover_percent}%)` : ""}`],
+      ["Limitations", report.limitations],
+    ];
+    body.innerHTML = rows
+      .map(([k, v]) => `<div class="report-row"><div class="k">${k}</div><div class="v">${escapeHtml(String(v))}</div></div>`)
+      .join("");
+    document.getElementById("reportModal").classList.add("open");
+  }
+  document.getElementById("closeReport").addEventListener("click", () => {
+    document.getElementById("reportModal").classList.remove("open");
+  });
+
+  async function loadHistory() {
+    try {
+      const res = await fetch(`${API_BASE}/api/history`);
+      const items = await res.json();
+      const listEl = document.getElementById("historyList");
+      const emptyEl = document.getElementById("historyEmpty");
+      if (!items.length) { emptyEl.style.display = "block"; listEl.innerHTML = ""; return; }
+      emptyEl.style.display = "none";
+      listEl.innerHTML = items.map((item) => `
+        <div class="history-item">
+          <img src="${API_BASE}${item.image_url}" />
+          <div>
+            <div class="q">${escapeHtml(item.question)}</div>
+            <div class="a">${escapeHtml(item.answer).slice(0, 100)}${item.answer.length > 100 ? "…" : ""}</div>
+          </div>
+          <div class="meta">
+            <div class="mode-tag">${item.mode}</div>
+            <div class="t">${new Date(item.created_at).toLocaleTimeString()}</div>
+          </div>
+        </div>
+      `).join("");
+    } catch (e) { /* backend not up yet */ }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str || "";
+    return div.innerHTML;
+  }
+
+  // ---------- Compare tab ----------
+  let beforeFile = null;
+  let afterFile = null;
+
+  function wireDrop(inputId, zoneContentId, onSet) {
+    document.getElementById(inputId).addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      onSet(file);
+      const url = URL.createObjectURL(file);
+      document.getElementById(zoneContentId).innerHTML = `<img src="${url}" style="max-width:100%; max-height:160px; border-radius:4px;" />`;
+    });
+  }
+  wireDrop("fileBefore", "dropzoneBeforeContent", (f) => (beforeFile = f));
+  wireDrop("fileAfter", "dropzoneAfterContent", (f) => (afterFile = f));
+
+  document.getElementById("compareBtn").addEventListener("click", async () => {
+    const errEl = document.getElementById("compareError");
+    errEl.style.display = "none";
+    if (!beforeFile || !afterFile) {
+      errEl.textContent = "Upload both a before and an after image.";
+      errEl.style.display = "block";
+      return;
+    }
+    const formData = new FormData();
+    formData.append("before", beforeFile);
+    formData.append("after", afterFile);
+    formData.append("label_before", document.getElementById("labelBefore").value);
+    formData.append("label_after", document.getElementById("labelAfter").value);
+
+    document.getElementById("compareBtn").disabled = true;
+    document.getElementById("compareLoading").style.display = "flex";
+    try {
+      const res = await fetch(`${API_BASE}/api/compare`, { method: "POST", body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Request failed (${res.status})`);
+      }
+      const data = await res.json();
+      renderCompare(data);
+    } catch (err) {
+      errEl.textContent = err.message || "Comparison failed. Is the backend running on :8000?";
+      errEl.style.display = "block";
+    } finally {
+      document.getElementById("compareBtn").disabled = false;
+      document.getElementById("compareLoading").style.display = "none";
+    }
+  });
+
+  function renderCompare(data) {
+    document.getElementById("compareEmpty").style.display = "none";
+    document.getElementById("compareContent").style.display = "block";
+    document.getElementById("compareNarrative").textContent = data.narrative;
+
+    const banner = document.getElementById("anomalyBanner");
+    if (data.anomaly_flagged) {
+      banner.style.display = "block";
+      banner.textContent = `⚠ Anomaly flagged — ${data.anomaly_reason || "unusual change detected."}`;
+    } else {
+      banner.style.display = "none";
+    }
+
+    const listEl = document.getElementById("changesList");
+    listEl.innerHTML = (data.changes || [])
+      .map((c) => `<div class="change-row"><div class="cat">${escapeHtml(c.category)}</div><div class="dir">${c.direction} ${c.estimated_percent_change}%</div></div>`)
+      .join("");
+
+    document.getElementById("compareConfidence").textContent = data.confidence != null ? `${data.confidence}%` : "—";
+  }
+
+  loadHistory();
+</script>
+
+</body>
+</html>
