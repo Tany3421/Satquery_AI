@@ -52,13 +52,35 @@ def on_startup():
 
 
 VALID_MODES = set(MODE_PROMPTS.keys())
+VALID_DATA_SOURCES = {"sentinel2", "sentinel1", "bhuvan", "fusion"}
+
+
+class UserSignup(BaseModel):
+    username: str
+    email: str
+    password: str
+
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
+class UserResponse(BaseModel):
+    id: str
+    username: str
+    email: str
+    created_at: str
 
 
 class QueryResponse(BaseModel):
     id: str
+    user_id: Optional[str] = None
     image_id: str
     image_url: str
     mode: str
+    data_source: Optional[str] = "sentinel2"
+    engine_used: Optional[str] = "Gemini API"
     question: str
     answer: str
     land_cover: list
@@ -69,7 +91,14 @@ class QueryResponse(BaseModel):
     cloud_cover_percent: Optional[int] = None
     image_quality: Optional[str] = None
     region_note: Optional[str] = None
+    coordinates: Optional[dict] = None
+    feature_masks: Optional[list] = None
     created_at: str
+
+
+class FastQueryRequest(BaseModel):
+    question: str
+    context: Optional[str] = ""
 
 
 class CompareResponse(BaseModel):
@@ -114,13 +143,76 @@ def _save_upload(raw: bytes, filename: str) -> tuple[str, Path, str]:
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "modes": sorted(VALID_MODES)}
+    return {
+        "status": "ok",
+        "modes": sorted(VALID_MODES),
+        "data_sources": sorted(VALID_DATA_SOURCES),
+        "engines": ["Gemini API (Image + Reasoning)", "Groq API (Fast Queries)"]
+    }
+
+
+@app.post("/api/auth/signup", response_model=UserResponse)
+def auth_signup(req: UserSignup):
+    if not req.username or not req.username.strip():
+        raise HTTPException(status_code=400, detail="Username is required")
+    if not req.email or "@" not in req.email:
+        raise HTTPException(status_code=400, detail="Valid email is required")
+    if len(req.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    if db.get_user_by_username(req.username):
+        raise HTTPException(status_code=400, detail="Username is already taken")
+    if db.get_user_by_email(req.email):
+        raise HTTPException(status_code=400, detail="Email is already registered")
+
+    user_id = str(uuid.uuid4())
+    created_at = datetime.now(timezone.utc).isoformat()
+    return db.create_user(user_id, req.username, req.email, req.password, created_at)
+
+
+@app.post("/api/auth/login", response_model=UserResponse)
+def auth_login(req: UserLogin):
+    user = db.get_user_by_username(req.username)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    if not db.verify_password(req.password, user["password_hash"], user["salt"]):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    return {
+        "id": user["id"],
+        "username": user["username"],
+        "email": user["email"],
+        "created_at": user["created_at"]
+    }
+
+
+@app.get("/api/auth/me/{user_id}", response_model=UserResponse)
+def auth_me(user_id: str):
+    user = db.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@app.post("/api/fast-query")
+def fast_query(req: FastQueryRequest):
+    """Fast text-only query engine endpoint using Groq API / Gemini fast fallback."""
+    if not req.question or not req.question.strip():
+        raise HTTPException(status_code=400, detail="question is required")
+    try:
+        res = engine.run_groq_fast_query(req.question.strip(), req.context or "")
+        return res
+    except engine.EngineError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
 
 
 @app.post("/api/analyze", response_model=QueryResponse)
 async def analyze(
     question: str = Form(...),
     mode: str = Form("general"),
+    data_source: str = Form("sentinel2"),
+    engine_type: str = Form("auto"),
+    user_id: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     image_id: Optional[str] = Form(None),
 ):
@@ -129,6 +221,10 @@ async def analyze(
     if mode not in VALID_MODES:
         raise HTTPException(
             status_code=400, detail=f"mode must be one of {sorted(VALID_MODES)}"
+        )
+    if data_source not in VALID_DATA_SOURCES:
+        raise HTTPException(
+            status_code=400, detail=f"data_source must be one of {sorted(VALID_DATA_SOURCES)}"
         )
 
     if image is not None:
@@ -148,15 +244,18 @@ async def analyze(
     image_b64 = base64.b64encode(raw).decode("utf-8")
 
     try:
-        parsed = engine.analyze_image(image_b64, media_type, question, mode)
+        parsed = engine.analyze_image(image_b64, media_type, question, mode, data_source, engine_type)
     except engine.EngineError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
 
     record = {
         "id": str(uuid.uuid4()),
+        "user_id": user_id,
         "image_id": img_id,
         "image_url": f"/uploads/{stored_path.name}",
         "mode": mode,
+        "data_source": data_source,
+        "engine_used": parsed.get("engine_used", "Gemini API"),
         "question": question,
         "answer": parsed.get("answer", ""),
         "land_cover": parsed.get("land_cover", []),
@@ -167,6 +266,8 @@ async def analyze(
         "cloud_cover_percent": parsed.get("cloud_cover_percent"),
         "image_quality": parsed.get("image_quality"),
         "region_note": parsed.get("region_note", ""),
+        "coordinates": parsed.get("coordinates"),
+        "feature_masks": parsed.get("feature_masks"),
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     db.insert_query(record)
@@ -233,9 +334,7 @@ def clear_history():
 def get_report(query_id: str):
     """
     ISRO-style analysis report for a single query — plain structured JSON;
-    the frontend renders it as a printable report (see 'Generate Report' in
-    the dashboard). EXTEND: render this as an actual PDF with reportlab/
-    the pdf skill if you want a downloadable file instead of print-to-PDF.
+    the frontend renders it as a printable report.
     """
     record = db.get_query(query_id)
     if not record:
@@ -246,6 +345,8 @@ def get_report(query_id: str):
         "source_image": record["image_url"],
         "query_date": record["created_at"],
         "mode": record["mode"],
+        "data_source": record.get("data_source", "sentinel2"),
+        "engine_used": record.get("engine_used", "Gemini API"),
         "question": record["question"],
         "findings": record["answer"],
         "land_cover": record["land_cover"],
@@ -255,6 +356,8 @@ def get_report(query_id: str):
         "limitations": record.get("uncertainty_reason") or "None noted.",
         "image_quality": record.get("image_quality"),
         "cloud_cover_percent": record.get("cloud_cover_percent"),
+        "coordinates": record.get("coordinates"),
+        "feature_masks": record.get("feature_masks"),
     }
 
 
