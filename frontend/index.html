@@ -6,6 +6,7 @@
 <title>SatQuery AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   :root {
     --bg: #0a0f1a;
@@ -31,6 +32,13 @@
     min-height: 100vh;
   }
   .mono { font-family: 'JetBrains Mono', monospace; }
+
+  .source-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; margin-bottom: 12px; }
+  .source-pill { background: transparent; border: 1px solid var(--panel-line); color: var(--ink-dim); padding: 6px 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+  .source-pill:hover { border-color: var(--teal-dim); color: var(--ink); }
+  .source-pill.active { background: rgba(79, 216, 196, 0.15); border-color: var(--teal); color: var(--teal); font-weight: 600; }
+
+  .engine-pill { font-size: 11px; font-family: 'JetBrains Mono', monospace; padding: 4px 8px; border-radius: 4px; background: rgba(79, 216, 196, 0.1); border: 1px solid var(--teal-dim); color: var(--teal); display: inline-block; margin-bottom: 10px; }
 
   header {
     border-bottom: 1px solid var(--panel-line);
@@ -256,26 +264,44 @@
       <div class="sub">Remote Sensing · Vision-Language Assistant</div>
     </div>
   </div>
-  <div class="code">SIH26167</div>
+  <div style="display:flex; align-items:center; gap:8px;">
+    <button type="button" class="source-pill" id="renewPageBtn" style="color:var(--amber); border-color:rgba(240,169,78,0.4); font-weight:600;"><span class="mono">🔄</span> Renew Page</button>
+    <div id="userHeaderBox">
+      <button type="button" class="source-pill" id="openAuthBtn">👤 Login / Sign Up</button>
+    </div>
+    <div class="code">SIH26167</div>
+  </div>
 </header>
 
 <nav class="tabs">
-  <button class="active" data-tab="analyze">Analyze</button>
+  <button class="active" data-tab="analyze">Analyze (Gemini API)</button>
+  <button data-tab="fast">Fast Query (Groq API)</button>
   <button data-tab="compare">Change Detection</button>
+  <button data-tab="login" id="navLoginTab">🔑 Login / Account</button>
 </nav>
 
 <!-- ============= ANALYZE TAB ============= -->
 <main class="view" id="tab-analyze">
   <section class="panel">
-    <h2>01 · Image + Query</h2>
+    <h2>01 · Image + Query Engine</h2>
 
-    <label class="field-label">Analysis mode</label>
+    <label class="field-label">Satellite Data Source</label>
+    <div class="source-pills" id="sourcePills">
+      <button type="button" class="source-pill active" data-source="sentinel2">Sentinel-2 (Optical)</button>
+      <button type="button" class="source-pill" data-source="sentinel1">Sentinel-1 (SAR Radar)</button>
+      <button type="button" class="source-pill" data-source="fusion">🛰️+📡 S1+S2 Sensor Fusion</button>
+      <button type="button" class="source-pill" data-source="bhuvan">ISRO / Bhuvan (Indian Data)</button>
+    </div>
+
+    <label class="field-label">Specialized RS Model / Domain Mode</label>
     <select id="modeSelect">
-      <option value="general">General</option>
-      <option value="agriculture">Agriculture</option>
-      <option value="disaster">Disaster</option>
-      <option value="urban">Urban</option>
-      <option value="environment">Environment</option>
+      <option value="general">🌐 General VQA</option>
+      <option value="agriculture">🌾 Agriculture & Crop Health</option>
+      <option value="disaster">🚨 Disaster & Flood Hazards</option>
+      <option value="urban">🏙️ Urban & Built-up Footprint</option>
+      <option value="environment">🌲 Vegetation & Ecosystems</option>
+      <option value="grounding">🎯 Spatial Grounding (Object Detection)</option>
+      <option value="segmentation">🗺️ BigEarthNet Semantic Segmentation</option>
     </select>
 
     <div style="margin-top:14px;">
@@ -299,19 +325,44 @@
       <button data-q="What notable objects or structures can you identify?">Objects?</button>
     </div>
 
-    <button class="primary-btn" id="askBtn">Analyze Image</button>
+    <button class="primary-btn" id="askBtn">Analyze Image (Gemini VLM Engine)</button>
     <div id="loadingLine" style="display:none;" class="loading-line">
-      <div class="spinner"></div> Running vision-language analysis…
+      <div class="spinner"></div> Running vision-language reasoning…
     </div>
     <div id="errorBox" style="display:none;" class="error-box"></div>
   </section>
 
   <section class="panel">
-    <h2>02 · Analysis</h2>
-    <div id="resultsEmpty" class="empty-state">Upload an image and ask a question to see results here.</div>
+    <h2>02 · Analysis + Map Output</h2>
+    <div id="resultsEmpty" class="empty-state">Upload an image and ask a question to see results & map here.</div>
 
     <div id="resultsContent" style="display:none;">
+      <div id="engineBadge" class="engine-pill">Engine: Gemini API</div>
       <div class="answer-box" id="answerText"></div>
+
+      <div class="section-label" style="margin-top: 14px;">Detected Feature Masks & Visual Highlights</div>
+      <div id="maskContainer" style="position:relative; width:100%; border-radius:8px; overflow:hidden; border:1px solid var(--panel-line); margin-bottom:8px; background:#060911;">
+        <img id="maskImagePreview" src="" style="width:100%; max-height:280px; object-fit:contain; display:block;" />
+        <canvas id="maskCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></canvas>
+      </div>
+      <div id="maskLegend" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;"></div>
+
+      <div class="section-label" style="margin-top: 14px; display:flex; justify-content:space-between; align-items:center;">
+        <span>Interactive Satellite Map (Result + Location)</span>
+        <span id="locationSourceBadge" class="badge good" style="font-size:10px;">📍 Location Ready</span>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:6px;">
+        <input type="text" id="mapSearchInput" placeholder="🔍 Search or adjust location (e.g. 'Kathmandu, Nepal', 'Pokhara', 'Badrinath')" style="flex:1; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:6px 10px; border-radius:6px; font-size:12px; font-family:'JetBrains Mono',monospace;" />
+        <button type="button" class="source-pill active" id="mapSearchBtn" style="padding:6px 12px; font-size:11px; white-space:nowrap;">Set Location</button>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; align-items:center;">
+        <span style="font-size:10px; color:var(--ink-dim);">Quick Location Presets:</span>
+        <button type="button" class="chip" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="setMapLocationQuick('Nepal')">🇳🇵 Nepal</button>
+        <button type="button" class="chip" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="setMapLocationQuick('Kathmandu, Nepal')">📍 Kathmandu</button>
+        <button type="button" class="chip" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="setMapLocationQuick('Pokhara, Nepal')">🏔️ Pokhara</button>
+        <button type="button" class="chip" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="setMapLocationQuick('Uttarakhand, India')">🏔️ Uttarakhand</button>
+      </div>
+      <div id="resultMap" style="height: 220px; border-radius: 8px; border: 1px solid var(--panel-line); margin-bottom: 14px; background: #060911;"></div>
 
       <div class="section-label">Land Cover Breakdown</div>
       <div id="landCoverBars"></div>
@@ -339,6 +390,40 @@
     <h2>03 · Query History</h2>
     <div id="historyEmpty" class="empty-state">No queries yet.</div>
     <div id="historyList"></div>
+  </section>
+</main>
+
+<!-- ============= FAST QUERY TAB ============= -->
+<main class="view" id="tab-fast" style="display:none;">
+  <section class="panel">
+    <h2>Fast Queries (Groq API Engine)</h2>
+    <p style="font-size: 13px; color: var(--ink-dim); margin-bottom: 14px;">
+      Rapid text queries & GIS domain lookups routed through Groq's high-speed Llama-3 70B engine (<500ms response time).
+    </p>
+
+    <label class="field-label">Domain Question</label>
+    <textarea id="fastQuestionInput" placeholder="e.g. Compare Sentinel-1 SAR vs Sentinel-2 Optical for flood monitoring in India." style="min-height: 90px;"></textarea>
+
+    <div class="quick-qs">
+      <button data-fq="How does Sentinel-1 SAR penetrate cloud cover during Indian monsoon flood mapping?">Monsoon Flood SAR</button>
+      <button data-fq="What are the key land cover spectral bands in Sentinel-2 for agriculture?">Sentinel-2 Crop Bands</button>
+      <button data-fq="What satellite datasets does ISRO Bhuvan geoportal provide for land use?">ISRO Bhuvan Datasets</button>
+    </div>
+
+    <button class="primary-btn" id="fastQueryBtn" style="margin-top: 14px;">Run Fast Query (Groq Engine)</button>
+    <div id="fastLoading" style="display:none;" class="loading-line">
+      <div class="spinner"></div> Routing to Groq Fast Engine…
+    </div>
+    <div id="fastError" style="display:none;" class="error-box"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Fast Response Output</h2>
+    <div id="fastEmpty" class="empty-state">Ask a question on the left to test fast query response.</div>
+    <div id="fastContent" style="display:none;">
+      <div id="fastEngineBadge" class="engine-pill">Engine: Groq API</div>
+      <div class="answer-box" id="fastAnswerText" style="white-space: pre-wrap;"></div>
+    </div>
   </section>
 </main>
 
@@ -387,6 +472,72 @@
   </section>
 </main>
 
+<!-- ============= LOGIN PAGE TAB ============= -->
+<main class="view" id="tab-login" style="display:none;">
+  <section class="panel">
+    <h2 id="pageAuthTitle">01 · Account Authentication</h2>
+    <p style="font-size: 13px; color: var(--ink-dim); margin-bottom: 16px;">
+      Sign in to save your remote sensing query history, track satellite analyses, and export customized ISRO reports.
+    </p>
+
+    <div id="pageAuthLoggedOut">
+      <div style="margin-bottom: 12px;">
+        <label class="field-label">Username</label>
+        <input type="text" id="pageAuthUsername" placeholder="Enter your username" style="width:100%; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:10px 12px; border-radius:6px; font-family:'JetBrains Mono',monospace;" />
+      </div>
+
+      <div id="pageAuthEmailGroup" style="display:none; margin-bottom: 12px;">
+        <label class="field-label">Email Address</label>
+        <input type="email" id="pageAuthEmail" placeholder="user@example.com" style="width:100%; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:10px 12px; border-radius:6px; font-family:'JetBrains Mono',monospace;" />
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <label class="field-label">Password</label>
+        <input type="password" id="pageAuthPassword" placeholder="••••••••" style="width:100%; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:10px 12px; border-radius:6px; font-family:'JetBrains Mono',monospace;" />
+      </div>
+
+      <div id="pageAuthError" style="display:none;" class="error-box"></div>
+
+      <button class="primary-btn" id="pageAuthSubmitBtn" style="margin-top:14px;">Sign In to Account</button>
+      
+      <div style="margin-top:14px; font-size:13px; color:var(--ink-dim); text-align:center;">
+        <span id="pageAuthToggleText">Don't have an account yet?</span>
+        <button type="button" id="pageAuthToggleBtn" style="background:none; border:none; color:var(--teal); cursor:pointer; text-decoration:underline; font-weight:600; margin-left:4px;">Create Account</button>
+      </div>
+    </div>
+
+    <div id="pageAuthLoggedIn" style="display:none;">
+      <div class="answer-box" style="margin-bottom: 14px;">
+        Active Session: Signed in as <b id="pageAuthUsernameDisplay" style="color:var(--teal);">—</b>
+      </div>
+      <div class="section-label">User Profile Details</div>
+      <div class="change-row"><div class="cat">User ID</div><div class="dir" id="pageAuthUserId">—</div></div>
+      <div class="change-row"><div class="cat">Email</div><div class="dir" id="pageAuthEmailDisplay">—</div></div>
+      <div class="change-row"><div class="cat">Role</div><div class="dir" style="color:var(--teal);">Active Satellite Researcher</div></div>
+      
+      <button class="primary-btn" id="pageLogoutBtn" style="margin-top:20px; background:rgba(224,101,79,0.2); color:var(--danger); border:1px solid rgba(224,101,79,0.4);">Logout Account</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>02 · Platform Features</h2>
+    <div style="font-size: 13.5px; line-height: 1.6; color: var(--ink-dim);">
+      <div style="margin-bottom: 12px;">
+        <b style="color: var(--teal);">🛰 Multimodal Satellite Analysis</b><br>
+        Analyze multispectral optical (Sentinel-2), Synthetic Aperture Radar (Sentinel-1 SAR), and Indian IRS (ISRO/Bhuvan) datasets seamlessly.
+      </div>
+      <div style="margin-bottom: 12px;">
+        <b style="color: var(--teal);">⚡ Dual API Processing Engine</b><br>
+        Gemini 3.6 Flash for complex VLM vision-language reasoning and Groq Llama-3 70B for instant &lt;500ms domain text queries.
+      </div>
+      <div style="margin-bottom: 12px;">
+        <b style="color: var(--teal);">🗺 Interactive Map & Feature Overlays</b><br>
+        Real-time Leaflet satellite basemap rendering, region bounding boxes, and color-coded feature mask highlights.
+      </div>
+    </div>
+  </section>
+</main>
+
 <!-- ============= REPORT MODAL ============= -->
 <div class="modal-backdrop" id="reportModal">
   <div class="modal">
@@ -397,9 +548,236 @@
   </div>
 </div>
 
+<!-- ============= AUTH MODAL ============= -->
+<div class="modal-backdrop" id="authModal">
+  <div class="modal" style="max-width: 400px;">
+    <h3 id="authModalTitle">Login to SatQuery AI</h3>
+    <div style="margin-top: 14px;">
+      <label class="field-label">Username</label>
+      <input type="text" id="authUsername" placeholder="e.g. sat_researcher" style="width:100%; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:8px 10px; border-radius:6px; font-family:'JetBrains Mono',monospace;" />
+      
+      <div id="authEmailGroup" style="display:none; margin-top:10px;">
+        <label class="field-label">Email</label>
+        <input type="email" id="authEmail" placeholder="user@example.com" style="width:100%; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:8px 10px; border-radius:6px; font-family:'JetBrains Mono',monospace;" />
+      </div>
+
+      <div style="margin-top:10px;">
+        <label class="field-label">Password</label>
+        <input type="password" id="authPassword" placeholder="••••••••" style="width:100%; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:8px 10px; border-radius:6px; font-family:'JetBrains Mono',monospace;" />
+      </div>
+    </div>
+    
+    <div id="authError" style="display:none;" class="error-box"></div>
+    
+    <button class="primary-btn" id="authSubmitBtn" style="margin-top:16px;">Sign In</button>
+    <div style="margin-top:12px; font-size:12px; color:var(--ink-dim); text-align:center;">
+      <span id="authToggleText">Need an account?</span>
+      <button type="button" id="authToggleBtn" style="background:none; border:none; color:var(--teal); cursor:pointer; text-decoration:underline;">Sign Up</button>
+    </div>
+    <button class="report-btn modal-close" id="closeAuth" style="margin-top:10px;">Cancel</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // EXTEND: point this at your deployed backend if it's not running on localhost:8000
   const API_BASE = "http://localhost:8000";
+
+  // ---------- User Auth State ----------
+  let currentUser = null;
+  try {
+    currentUser = JSON.parse(localStorage.getItem("satquery_user") || "null");
+  } catch (e) { currentUser = null; }
+
+  const openAuthBtn = document.getElementById("openAuthBtn");
+  const authModal = document.getElementById("authModal");
+  const closeAuth = document.getElementById("closeAuth");
+  const authModalTitle = document.getElementById("authModalTitle");
+  const authUsername = document.getElementById("authUsername");
+  const authEmail = document.getElementById("authEmail");
+  const authEmailGroup = document.getElementById("authEmailGroup");
+  const authPassword = document.getElementById("authPassword");
+  const authError = document.getElementById("authError");
+  const authSubmitBtn = document.getElementById("authSubmitBtn");
+  const authToggleBtn = document.getElementById("authToggleBtn");
+  const authToggleText = document.getElementById("authToggleText");
+
+  let isSignUpMode = false;
+
+  function updateAuthHeader() {
+    const userBox = document.getElementById("userHeaderBox");
+    const pageAuthLoggedOut = document.getElementById("pageAuthLoggedOut");
+    const pageAuthLoggedIn = document.getElementById("pageAuthLoggedIn");
+
+    if (currentUser) {
+      if (userBox) {
+        userBox.innerHTML = `
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--teal);">👤 ${escapeHtml(currentUser.username)}</span>
+            <button type="button" class="source-pill" id="logoutBtn" style="padding:4px 8px; font-size:10px;">Logout</button>
+          </div>`;
+        document.getElementById("logoutBtn").addEventListener("click", performLogout);
+      }
+      if (pageAuthLoggedOut) pageAuthLoggedOut.style.display = "none";
+      if (pageAuthLoggedIn) {
+        pageAuthLoggedIn.style.display = "block";
+        document.getElementById("pageAuthUsernameDisplay").textContent = currentUser.username;
+        document.getElementById("pageAuthUserId").textContent = currentUser.id;
+        document.getElementById("pageAuthEmailDisplay").textContent = currentUser.email || "N/A";
+      }
+    } else {
+      if (userBox) {
+        userBox.innerHTML = `<button type="button" class="source-pill" id="openAuthBtn">👤 Login / Sign Up</button>`;
+        document.getElementById("openAuthBtn").addEventListener("click", () => {
+          // Switch to dedicated login page tab
+          document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.remove("active"));
+          document.getElementById("navLoginTab").classList.add("active");
+          document.querySelectorAll("main.view").forEach((m) => (m.style.display = "none"));
+          document.getElementById("tab-login").style.display = "grid";
+        });
+      }
+      if (pageAuthLoggedOut) pageAuthLoggedOut.style.display = "block";
+      if (pageAuthLoggedIn) pageAuthLoggedIn.style.display = "none";
+    }
+  }
+
+  function performLogout() {
+    currentUser = null;
+    localStorage.removeItem("satquery_user");
+    updateAuthHeader();
+    showToast("Logged out of account.");
+  }
+
+  const pageLogoutBtn = document.getElementById("pageLogoutBtn");
+  if (pageLogoutBtn) pageLogoutBtn.addEventListener("click", performLogout);
+
+  closeAuth.addEventListener("click", () => authModal.classList.remove("open"));
+  
+  authToggleBtn.addEventListener("click", () => {
+    isSignUpMode = !isSignUpMode;
+    authModalTitle.textContent = isSignUpMode ? "Create SatQuery Account" : "Login to SatQuery AI";
+    authEmailGroup.style.display = isSignUpMode ? "block" : "none";
+    authSubmitBtn.textContent = isSignUpMode ? "Sign Up Account" : "Sign In";
+    authToggleText.textContent = isSignUpMode ? "Already registered?" : "Need an account?";
+    authToggleBtn.textContent = isSignUpMode ? "Sign In" : "Sign Up";
+    authError.style.display = "none";
+  });
+
+  const pageAuthToggleBtn = document.getElementById("pageAuthToggleBtn");
+  if (pageAuthToggleBtn) {
+    pageAuthToggleBtn.addEventListener("click", () => {
+      isSignUpMode = !isSignUpMode;
+      document.getElementById("pageAuthTitle").textContent = isSignUpMode ? "01 · Create Account" : "01 · Account Authentication";
+      document.getElementById("pageAuthEmailGroup").style.display = isSignUpMode ? "block" : "none";
+      document.getElementById("pageAuthSubmitBtn").textContent = isSignUpMode ? "Create Account" : "Sign In to Account";
+      document.getElementById("pageAuthToggleText").textContent = isSignUpMode ? "Already registered?" : "Don't have an account yet?";
+      pageAuthToggleBtn.textContent = isSignUpMode ? "Sign In" : "Create Account";
+      document.getElementById("pageAuthError").style.display = "none";
+    });
+  }
+
+  async function handleAuthSubmission(usernameVal, emailVal, passwordVal, errorEl) {
+    errorEl.style.display = "none";
+    if (!usernameVal || !passwordVal) {
+      errorEl.textContent = "Please fill in username and password.";
+      errorEl.style.display = "block";
+      return;
+    }
+    const endpoint = isSignUpMode ? `${API_BASE}/api/auth/signup` : `${API_BASE}/api/auth/login`;
+    const payload = isSignUpMode ? { username: usernameVal, email: emailVal, password: passwordVal } : { username: usernameVal, password: passwordVal };
+
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Authentication failed");
+      }
+      const data = await res.json();
+      currentUser = data;
+      localStorage.setItem("satquery_user", JSON.stringify(currentUser));
+      updateAuthHeader();
+      authModal.classList.remove("open");
+      showToast(`Welcome ${currentUser.username}! Logged in.`);
+    } catch (err) {
+      errorEl.textContent = err.message || "Auth failed";
+      errorEl.style.display = "block";
+    }
+  }
+
+  authSubmitBtn.addEventListener("click", () => {
+    handleAuthSubmission(authUsername.value.trim(), authEmail.value.trim(), authPassword.value.trim(), authError);
+  });
+
+  const pageAuthSubmitBtn = document.getElementById("pageAuthSubmitBtn");
+  if (pageAuthSubmitBtn) {
+    pageAuthSubmitBtn.addEventListener("click", () => {
+      const u = document.getElementById("pageAuthUsername").value.trim();
+      const e = document.getElementById("pageAuthEmail").value.trim();
+      const p = document.getElementById("pageAuthPassword").value.trim();
+      handleAuthSubmission(u, e, p, document.getElementById("pageAuthError"));
+    });
+  }
+
+  updateAuthHeader();
+
+  // ---------- Renew Page / Reset Button ----------
+  function renewPage() {
+    currentFile = null;
+    currentImageId = null;
+    lastQueryId = null;
+
+    fileInput.value = "";
+    dropzoneContent.innerHTML = `
+      <div class="hint">Click to upload a satellite / aerial image</div>
+      <div class="hint-sm">JPG · PNG · WEBP</div>`;
+    dropzone.classList.remove("has-image");
+
+    questionInput.value = "";
+    if (modeSelect) modeSelect.value = "general";
+
+    document.getElementById("resultsContent").style.display = "none";
+    document.getElementById("resultsEmpty").style.display = "block";
+    document.getElementById("errorBox").style.display = "none";
+    document.getElementById("loadingLine").style.display = "none";
+
+    const fastInput = document.getElementById("fastQuestionInput");
+    if (fastInput) fastInput.value = "";
+    const fastContent = document.getElementById("fastContent");
+    if (fastContent) fastContent.style.display = "none";
+    const fastEmpty = document.getElementById("fastEmpty");
+    if (fastEmpty) fastEmpty.style.display = "block";
+
+    const maskContainer = document.getElementById("maskContainer");
+    if (maskContainer) maskContainer.style.display = "none";
+    const maskLegend = document.getElementById("maskLegend");
+    if (maskLegend) maskLegend.innerHTML = "";
+
+    if (leafletMap) {
+      if (mapMarker) { leafletMap.removeLayer(mapMarker); mapMarker = null; }
+      if (mapRect) { leafletMap.removeLayer(mapRect); mapRect = null; }
+      leafletMap.setView([20.5937, 78.9629], 5);
+    }
+
+    loadHistory();
+    showToast("🔄 Page renewed for a new satellite query!");
+  }
+
+  const renewPageBtn = document.getElementById("renewPageBtn");
+  if (renewPageBtn) renewPageBtn.addEventListener("click", renewPage);
+
+  function showToast(msg) {
+    const existing = document.getElementById("toastNotification");
+    if (existing) existing.remove();
+    const toast = document.createElement("div");
+    toast.id = "toastNotification";
+    toast.style.cssText = "position:fixed; bottom:20px; right:20px; background:#0f1729; border:1px solid var(--teal); color:var(--teal); padding:10px 18px; border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:12px; z-index:1000; box-shadow:0 4px 12px rgba(0,0,0,0.5);";
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.remove(); }, 3000);
+  }
 
   // ---------- Tabs ----------
   document.querySelectorAll("nav.tabs button").forEach((btn) => {
@@ -408,6 +786,19 @@
       btn.classList.add("active");
       document.querySelectorAll("main.view").forEach((m) => (m.style.display = "none"));
       document.getElementById(`tab-${btn.dataset.tab}`).style.display = "grid";
+      if (btn.dataset.tab === "analyze" && leafletMap) {
+        setTimeout(() => leafletMap.invalidateSize(), 200);
+      }
+    });
+  });
+
+  // ---------- Satellite Source Pills ----------
+  let selectedDataSource = "sentinel2";
+  document.querySelectorAll(".source-pill[data-source]").forEach((pill) => {
+    pill.addEventListener("click", () => {
+      document.querySelectorAll(".source-pill[data-source]").forEach((p) => p.classList.remove("active"));
+      pill.classList.add("active");
+      selectedDataSource = pill.dataset.source;
     });
   });
 
@@ -434,11 +825,12 @@
     dropzone.classList.add("has-image");
   });
 
-  document.querySelectorAll(".quick-qs button").forEach((btn) => {
+  document.querySelectorAll(".quick-qs button[data-q]").forEach((btn) => {
     btn.addEventListener("click", () => { questionInput.value = btn.dataset.q; });
   });
 
   let lastQueryId = null;
+  let currentHistoryItems = [];
 
   askBtn.addEventListener("click", async () => {
     errorBox.style.display = "none";
@@ -450,6 +842,8 @@
     const formData = new FormData();
     formData.append("question", question);
     formData.append("mode", modeSelect.value);
+    formData.append("data_source", selectedDataSource);
+    if (currentUser && currentUser.id) formData.append("user_id", currentUser.id);
     if (currentFile) formData.append("image", currentFile);
     else formData.append("image_id", currentImageId);
 
@@ -476,10 +870,192 @@
   function setLoading(on) { askBtn.disabled = on; loadingLine.style.display = on ? "flex" : "none"; }
   function showError(msg) { errorBox.textContent = msg; errorBox.style.display = "block"; }
 
+  let leafletMap = null;
+  let mapMarker = null;
+  let mapRect = null;
+  let currentResultData = null;
+
+  function initOrUpdateMap(coords) {
+    const mapContainer = document.getElementById("resultMap");
+    if (!mapContainer) return;
+
+    let lat = (coords && coords.lat != null) ? coords.lat : 20.5937;
+    let lng = (coords && coords.lng != null) ? coords.lng : 78.9629;
+    let zoom = (coords && coords.bounding_box) ? 10 : 8;
+    const sourceTag = (coords && coords.source) ? coords.source : "Geospatial Location";
+
+    const badgeEl = document.getElementById("locationSourceBadge");
+    if (badgeEl) {
+      badgeEl.textContent = `📍 ${sourceTag}`;
+    }
+
+    const searchInputEl = document.getElementById("mapSearchInput");
+    if (searchInputEl && coords && coords.location_name) {
+      searchInputEl.value = coords.location_name.split(',')[0];
+    }
+
+    if (!leafletMap) {
+      leafletMap = L.map('resultMap').setView([lat, lng], zoom);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Esri Satellite Tiles'
+      }).addTo(leafletMap);
+    } else {
+      leafletMap.setView([lat, lng], zoom);
+    }
+
+    if (mapMarker) { leafletMap.removeLayer(mapMarker); mapMarker = null; }
+    if (mapRect) { leafletMap.removeLayer(mapRect); mapRect = null; }
+
+    if (coords && coords.lat != null && coords.lng != null) {
+      mapMarker = L.marker([coords.lat, coords.lng]).addTo(leafletMap)
+        .bindPopup(`<b>${escapeHtml(coords.location_name || 'Satellite Scene Area')}</b><br><span style="font-size:11px; color:#4fd8c4;">${sourceTag}</span><br>Lat: ${coords.lat.toFixed(4)}, Lng: ${coords.lng.toFixed(4)}`)
+        .openPopup();
+    }
+
+    if (coords && coords.bounding_box && coords.bounding_box.length === 4) {
+      const [s, w, n, e] = coords.bounding_box;
+      mapRect = L.rectangle([[s, w], [n, e]], { color: "#4fd8c4", weight: 2, fillOpacity: 0.25 }).addTo(leafletMap);
+      leafletMap.fitBounds([[s, w], [n, e]]);
+    }
+
+    setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 300);
+  }
+
+  const mapSearchInput = document.getElementById("mapSearchInput");
+  const mapSearchBtn = document.getElementById("mapSearchBtn");
+
+  async function handleMapLocationSearch() {
+    const query = mapSearchInput.value.trim();
+    if (!query) return;
+    try {
+      mapSearchBtn.disabled = true;
+      mapSearchBtn.textContent = "Locating…";
+      const encoded = encodeURIComponent(query);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const item = data[0];
+        const lat = parseFloat(item.lat);
+        const lng = parseFloat(item.lon);
+        const bb = item.boundingbox ? [parseFloat(item.boundingbox[0]), parseFloat(item.boundingbox[2]), parseFloat(item.boundingbox[1]), parseFloat(item.boundingbox[3])] : null;
+
+        const newCoords = {
+          lat: lat,
+          lng: lng,
+          location_name: item.display_name,
+          bounding_box: bb,
+          source: `User Pin (${query})`
+        };
+
+        if (currentResultData) {
+          currentResultData.coordinates = newCoords;
+        }
+        initOrUpdateMap(newCoords);
+        showToast(`📍 Location updated to: ${item.display_name.split(',')[0]}`);
+      } else {
+        showToast("⚠️ Location not found. Try entering city, region, or landmark name.");
+      }
+    } catch (err) {
+      showToast("⚠️ Geocoding search error.");
+    } finally {
+      mapSearchBtn.disabled = false;
+      mapSearchBtn.textContent = "Set Location";
+    }
+  }
+
+  if (mapSearchBtn) mapSearchBtn.addEventListener("click", handleMapLocationSearch);
+  if (mapSearchInput) {
+    mapSearchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleMapLocationSearch();
+    });
+  }
+
+  function setMapLocationQuick(locName) {
+    if (mapSearchInput) {
+      mapSearchInput.value = locName;
+      handleMapLocationSearch();
+    }
+  }
+
+  function renderFeatureMasks(imageUrl, masks) {
+    const container = document.getElementById("maskContainer");
+    const imgEl = document.getElementById("maskImagePreview");
+    const canvasEl = document.getElementById("maskCanvas");
+    const legendEl = document.getElementById("maskLegend");
+
+    if (!imageUrl) { container.style.display = "none"; return; }
+    container.style.display = "block";
+    imgEl.src = `${API_BASE}${imageUrl}`;
+
+    imgEl.onload = () => {
+      canvasEl.width = imgEl.clientWidth;
+      canvasEl.height = imgEl.clientHeight;
+      const ctx = canvasEl.getContext("2d");
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+      legendEl.innerHTML = "";
+      const colorMap = {
+        vegetation: "#2ecc71",
+        water: "#3498db",
+        urban: "#e67e22",
+        disaster: "#e74c3c",
+        other: "#9b59b6"
+      };
+
+      if (!masks || !masks.length) {
+        // Fallback default mask highlights if none generated
+        masks = [
+          { feature_name: "Primary Land Feature", category: "vegetation", box_2d: [150, 150, 850, 850] }
+        ];
+      }
+
+      masks.forEach((m) => {
+        const cat = (m.category || "other").toLowerCase();
+        const color = colorMap[cat] || colorMap.other;
+
+        const pill = document.createElement("span");
+        pill.className = "chip";
+        pill.style.background = `${color}22`;
+        pill.style.color = color;
+        pill.style.borderColor = `${color}66`;
+        pill.textContent = `📍 ${m.feature_name || cat.toUpperCase()}`;
+        legendEl.appendChild(pill);
+
+        if (m.box_2d && m.box_2d.length === 4) {
+          const [ymin, xmin, ymax, xmax] = m.box_2d;
+          const x = (xmin / 1000.0) * canvasEl.width;
+          const y = (ymin / 1000.0) * canvasEl.height;
+          const w = ((xmax - xmin) / 1000.0) * canvasEl.width;
+          const h = ((ymax - ymin) / 1000.0) * canvasEl.height;
+
+          ctx.fillStyle = `${color}35`;
+          ctx.fillRect(x, y, w, h);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.strokeRect(x, y, w, h);
+
+          ctx.fillStyle = color;
+          ctx.font = "bold 11px 'JetBrains Mono', monospace";
+          ctx.fillText(m.feature_name || cat, x + 4, y > 16 ? y - 4 : y + 14);
+        }
+      });
+    };
+  }
+
   function renderResult(data) {
+    currentResultData = data;
     document.getElementById("resultsEmpty").style.display = "none";
     document.getElementById("resultsContent").style.display = "block";
     document.getElementById("answerText").textContent = data.answer;
+
+    const engineBadge = document.getElementById("engineBadge");
+    if (engineBadge) {
+      const dsLabel = data.data_source ? data.data_source.toUpperCase() : "SENTINEL2";
+      engineBadge.textContent = `Engine: ${data.engine_used || 'Gemini API'} · Data: ${dsLabel}`;
+    }
+
+    renderFeatureMasks(data.image_url, data.feature_masks);
+    initOrUpdateMap(data.coordinates);
 
     const barsEl = document.getElementById("landCoverBars");
     barsEl.innerHTML = "";
@@ -544,17 +1120,22 @@
 
   function showReport(report) {
     document.getElementById("reportMeta").textContent =
-      `Generated ${new Date(report.generated_at).toLocaleString()} · Mode: ${report.mode}`;
+      `Generated ${new Date(report.generated_at).toLocaleString()} · Mode: ${report.mode} · Data: ${report.data_source || 'Sentinel-2'}`;
     const body = document.getElementById("reportBody");
+    const coordsStr = report.coordinates ? `Lat: ${report.coordinates.lat}, Lng: ${report.coordinates.lng} (${report.coordinates.location_name || 'Scene Region'})` : "None";
+    const maskCount = report.feature_masks ? report.feature_masks.length : 0;
+    
     const rows = [
       ["Query", report.question],
       ["Findings", report.findings],
-      ["Land Cover", (report.land_cover || []).map((l) => `${l.label} ${l.percent}%`).join(", ") || "—"],
+      ["Land Cover Breakdown", (report.land_cover || []).map((l) => `${l.label} ${l.percent}%`).join(", ") || "—"],
       ["Detected Features", (report.detected_features || []).join(", ") || "—"],
-      ["Evidence", (report.evidence || []).join("; ") || "—"],
-      ["Confidence", `${report.confidence}%`],
+      ["Geospatial Location", coordsStr],
+      ["Feature Mask Overlays", `${maskCount} spatial feature region masks generated`],
+      ["Visual Evidence", (report.evidence || []).join("; ") || "—"],
+      ["Confidence Score", `${report.confidence}%`],
       ["Image Quality", `${report.image_quality || "—"}${report.cloud_cover_percent != null ? ` (cloud cover ${report.cloud_cover_percent}%)` : ""}`],
-      ["Limitations", report.limitations],
+      ["Limitations & Uncertainty", report.limitations],
     ];
     body.innerHTML = rows
       .map(([k, v]) => `<div class="report-row"><div class="k">${k}</div><div class="v">${escapeHtml(String(v))}</div></div>`)
@@ -569,16 +1150,20 @@
     try {
       const res = await fetch(`${API_BASE}/api/history`);
       const items = await res.json();
+      currentHistoryItems = items;
       const listEl = document.getElementById("historyList");
       const emptyEl = document.getElementById("historyEmpty");
       if (!items.length) { emptyEl.style.display = "block"; listEl.innerHTML = ""; return; }
       emptyEl.style.display = "none";
       listEl.innerHTML = items.map((item) => `
-        <div class="history-item">
-          <img src="${API_BASE}${item.image_url}" />
-          <div>
+        <div class="history-item" style="cursor:pointer;" onclick="openHistoryQuery('${item.id}')">
+          <img src="${API_BASE}${item.image_url}" alt="history thumb" />
+          <div style="flex:1;">
             <div class="q">${escapeHtml(item.question)}</div>
-            <div class="a">${escapeHtml(item.answer).slice(0, 100)}${item.answer.length > 100 ? "…" : ""}</div>
+            <div class="a">${escapeHtml(item.answer).slice(0, 90)}${item.answer.length > 90 ? "…" : ""}</div>
+            <div style="margin-top:6px;">
+              <span class="chip" style="font-size:10px; padding:3px 8px; cursor:pointer;">👁 Re-open Analysis & Report</span>
+            </div>
           </div>
           <div class="meta">
             <div class="mode-tag">${item.mode}</div>
@@ -589,10 +1174,81 @@
     } catch (e) { /* backend not up yet */ }
   }
 
+  function openHistoryQuery(id) {
+    const item = currentHistoryItems.find((i) => i.id === id);
+    if (!item) return;
+    lastQueryId = item.id;
+    currentImageId = item.image_id;
+    questionInput.value = item.question;
+    if (item.mode && modeSelect) modeSelect.value = item.mode;
+    if (item.data_source) {
+      selectedDataSource = item.data_source;
+      document.querySelectorAll(".source-pill[data-source]").forEach((p) => {
+        p.classList.toggle("active", p.dataset.source === item.data_source);
+      });
+    }
+
+    dropzoneContent.innerHTML = `<img src="${API_BASE}${item.image_url}" alt="preview" />`;
+    dropzone.classList.add("has-image");
+
+    renderResult(item);
+
+    document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.remove("active"));
+    document.querySelector("nav.tabs button[data-tab='analyze']").classList.add("active");
+    document.querySelectorAll("main.view").forEach((m) => (m.style.display = "none"));
+    document.getElementById("tab-analyze").style.display = "grid";
+    if (leafletMap) setTimeout(() => leafletMap.invalidateSize(), 200);
+  }
+
   function escapeHtml(str) {
     const div = document.createElement("div");
     div.textContent = str || "";
     return div.innerHTML;
+  }
+
+  // ---------- Fast Query Tab (Groq Engine) ----------
+  const fastBtn = document.getElementById("fastQueryBtn");
+  const fastInput = document.getElementById("fastQuestionInput");
+  const fastLoading = document.getElementById("fastLoading");
+  const fastError = document.getElementById("fastError");
+  const fastContent = document.getElementById("fastContent");
+  const fastEmpty = document.getElementById("fastEmpty");
+
+  document.querySelectorAll("[data-fq]").forEach((btn) => {
+    btn.addEventListener("click", () => { fastInput.value = btn.dataset.fq; });
+  });
+
+  if (fastBtn) {
+    fastBtn.addEventListener("click", async () => {
+      fastError.style.display = "none";
+      const q = fastInput.value.trim();
+      if (!q) { fastError.textContent = "Type a question first."; fastError.style.display = "block"; return; }
+
+      fastBtn.disabled = true;
+      fastLoading.style.display = "flex";
+      try {
+        const res = await fetch(`${API_BASE}/api/fast-query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: q })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `Fast Query request failed (${res.status})`);
+        }
+        const data = await res.json();
+        fastEmpty.style.display = "none";
+        fastContent.style.display = "block";
+        document.getElementById("fastEngineBadge").textContent = `Engine: ${data.engine_used || 'Groq API'} (${data.speed || 'Fast'})`;
+        document.getElementById("fastAnswerText").textContent = data.answer;
+      } catch (err) {
+        fastError.textContent = err.message || "Fast query failed. Check backend connection.";
+        fastError.style.display = "block";
+      } finally {
+        fastBtn.disabled = false;
+        fastLoading.style.display = "none";
+      }
+    });
   }
 
   // ---------- Compare tab ----------
