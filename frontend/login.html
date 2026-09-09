@@ -8,14 +8,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script>
+    (function() {
+      const urlTheme = new URLSearchParams(window.location.search).get("theme");
+      const savedTheme = urlTheme || localStorage.getItem("satquery_theme") || "dark";
+      document.documentElement.setAttribute("data-theme", savedTheme === "light" ? "light" : "dark");
+    })();
+  </script>
   <style>
     :root {
-      /* 🌙 Dark Mode Theme Tokens (Exact User Specification) */
+      /* 🌙 Dark Mode Theme Tokens (Exact User Specification with Glassmorphism) */
       --bg: #050A14;
-      --panel: #0B1424;
-      --panel-elevated: #101C30;
-      --panel-line: #1B344B;
-      --input-bg: #101C30;
+      --panel: rgba(11, 20, 36, 0.78);
+      --panel-elevated: rgba(16, 28, 48, 0.75);
+      --panel-line: rgba(27, 52, 75, 0.75);
+      --input-bg: rgba(16, 28, 48, 0.75);
       --teal: #00D9FF;
       --teal-dim: rgba(0, 217, 255, 0.12);
       --teal-hover: #33E2FF;
@@ -26,17 +33,17 @@
       --primary: #00D9FF;
       --cyan-glow: rgba(0, 217, 255, 0.35);
       --font-mono: 'JetBrains Mono', monospace;
-      --radius: 14px;
+      --radius: 16px;
     }
 
     [data-theme="light"] {
-      /* ☀️ Light Mode Theme Tokens (Exact User Specification) */
+      /* ☀️ Light Mode Theme Tokens (Exact User Specification with Glassmorphism) */
       --bg: #F4F8FC;
-      --panel: #FFFFFF;
+      --panel: rgba(255, 255, 255, 0.88);
       --panel-elevated: #EAF2F8;
       --panel-line: #D5E1EB;
       --input-bg: #EAF2F8;
-      --teal: #009FC4;
+      --teal: #00A88F;
       --teal-dim: rgba(0, 159, 196, 0.12);
       --teal-hover: #00B1DC;
       --amber: #D88A00;
@@ -88,6 +95,14 @@
     body {
       font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
       background-color: var(--bg);
+      background-image:
+        linear-gradient(135deg, rgba(5, 10, 20, 0.88) 0%, rgba(5, 10, 20, 0.65) 50%, rgba(5, 10, 20, 0.85) 100%),
+        radial-gradient(ellipse 90% 50% at 50% 0%, rgba(0, 217, 255, 0.15) 0%, transparent 65%),
+        url('orbital_earth_bg.jpg');
+      background-size: 100% 100%, 100% 100%, cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
       color: var(--ink);
       min-height: 100vh;
       display: flex;
@@ -97,6 +112,13 @@
       position: relative;
       overflow-x: hidden;
       transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    [data-theme="light"] body {
+      background-image:
+        linear-gradient(135deg, rgba(250, 243, 228, 0.92) 0%, rgba(250, 243, 228, 0.82) 50%, rgba(250, 243, 228, 0.90) 100%),
+        radial-gradient(ellipse 90% 50% at 50% 0%, rgba(0, 159, 196, 0.12) 0%, transparent 65%),
+        url('orbital_earth_bg.jpg');
     }
 
     [data-theme="light"] .form-input {
@@ -145,14 +167,19 @@
       background: var(--panel);
       border: 1px solid var(--panel-line);
       border-radius: var(--radius);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(79, 216, 196, 0.05);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 24px rgba(0, 217, 255, 0.15);
       width: 100%;
       max-width: 440px;
       padding: 2.2rem;
       position: relative;
       z-index: 1;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(20px);
     }
+    .auth-card::before, .auth-card::after {
+      content: ""; position: absolute; width: 20px; height: 20px; pointer-events: none;
+    }
+    .auth-card::before { top: -1px; left: -1px; border-top: 2px solid var(--primary); border-left: 2px solid var(--primary); border-top-left-radius: var(--radius); opacity: 0.85; }
+    .auth-card::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--primary); border-right: 2px solid var(--primary); border-bottom-right-radius: var(--radius); opacity: 0.85; }
 
     .auth-logo {
       text-align: center;
@@ -476,7 +503,7 @@
 </div>
 
 <script>
-  const API_BASE = "http://localhost:8000";
+  const API_BASE = window.location.protocol.startsWith("http") ? window.location.origin : "http://localhost:8000";
 
   // Light & Dark Theme Controller for Login Screen (Segmented Switch)
   const loginThemeOptLight = document.getElementById("loginThemeOptLight");
@@ -506,8 +533,12 @@
   const savedTheme = urlTheme || localStorage.getItem("satquery_theme") || "dark";
   applyLoginTheme(savedTheme);
 
-  // If already logged in with JWT token, redirect immediately to main app
-  if (localStorage.getItem("satquery_token")) {
+  // If already logged in with JWT token, redirect to main app (unless logout was explicitly requested)
+  const isLogout = new URLSearchParams(window.location.search).get("logout") === "1";
+  if (isLogout) {
+    localStorage.removeItem("satquery_token");
+    localStorage.removeItem("satquery_user");
+  } else if (localStorage.getItem("satquery_token")) {
     window.location.href = "index.html";
   }
 
@@ -584,7 +615,11 @@
         window.location.href = "index.html";
       }, 500);
     } catch (err) {
-      showErr(err.message);
+      let msg = err.message || "Invalid credentials";
+      if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("Load failed") || msg.includes("Network request failed")) {
+        msg = "⚠️ Backend server unreachable at " + API_BASE + ". Please start the Python backend (python -m uvicorn backend.main:app --reload --port 8000) and open http://localhost:8000/login.html";
+      }
+      showErr(msg);
       btn.disabled = false;
       btn.textContent = 'Log In →';
     }
@@ -629,7 +664,11 @@
         window.location.href = "index.html";
       }, 500);
     } catch (err) {
-      showErr(err.message);
+      let msg = err.message || "Registration failed";
+      if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("Load failed") || msg.includes("Network request failed")) {
+        msg = "⚠️ Backend server unreachable at " + API_BASE + ". Please start the Python backend (python -m uvicorn backend.main:app --reload --port 8000) and open http://localhost:8000/login.html";
+      }
+      showErr(msg);
       btn.disabled = false;
       btn.textContent = 'Create Account →';
     }

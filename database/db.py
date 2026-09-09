@@ -31,16 +31,23 @@ MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "satquery")
 _mongo_client = None
 _mongo_db = None
 _using_mongodb = False
+_mongo_last_check = 0
+_MONGO_RETRY_INTERVAL = 30  # Cooldown in seconds before re-checking if MongoDB is running
 
 
 def _get_mongo():
-    global _mongo_client, _mongo_db, _using_mongodb
+    global _mongo_client, _mongo_db, _using_mongodb, _mongo_last_check
     if _mongo_db is not None:
         return _mongo_db
 
+    now = time.time()
+    if now - _mongo_last_check < _MONGO_RETRY_INTERVAL:
+        return None
+
+    _mongo_last_check = now
     try:
         import pymongo
-        client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=2000)
+        client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=800, connectTimeoutMS=800)
         # Verify server connection
         client.admin.command("ping")
         db = client[MONGO_DB_NAME]
@@ -56,7 +63,7 @@ def _get_mongo():
         _mongo_db = db
         _using_mongodb = True
         return _mongo_db
-    except Exception as exc:
+    except Exception:
         _using_mongodb = False
         return None
 
@@ -180,8 +187,11 @@ def _init_sqlite_fallback():
     conn.close()
 
 
-# ---------------------------------------------------------------------------
-# User Authentication & Management Functions
+# Ensure SQLite schema always exists immediately as reliable fallback
+try:
+    _init_sqlite_fallback()
+except Exception:
+    pass
 # ---------------------------------------------------------------------------
 
 def create_user(user_id: str, username: str, email: str, password: str, created_at: str, role: str = "researcher") -> dict:

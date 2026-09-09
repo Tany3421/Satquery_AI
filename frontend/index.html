@@ -7,22 +7,29 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<script>
+  (function() {
+    const urlTheme = new URLSearchParams(window.location.search).get("theme");
+    const savedTheme = urlTheme || localStorage.getItem("satquery_theme") || "dark";
+    document.documentElement.setAttribute("data-theme", savedTheme === "light" ? "light" : "dark");
+  })();
+</script>
 <style>
   :root {
-    /* 🌙 Dark Mode Theme Tokens (Exact User Specification) */
+    /* 🌙 Dark Mode Theme Tokens (Exact User Specification with Glassmorphic Translucency) */
     --bg: #050A14;
-    --bg-surface: #101C30;
-    --bg-card: #0B1424;
-    --bg-card-hover: #122038;
-    --panel: #0B1424;
-    --panel-hover: #101C30;
-    --panel-elevated: #101C30;
-    --panel-line: #1B344B;
-    --panel-line-hover: #2A4C6B;
-    --input-bg: #101C30;
-    --input-focus-bg: #14243D;
-    --dropzone-bg: radial-gradient(circle at 50% 50%, rgba(0, 217, 255, 0.04), transparent 75%), #080F1E;
-    --dropzone-hover-bg: radial-gradient(circle at 50% 50%, rgba(0, 217, 255, 0.08), transparent 75%), #0D182B;
+    --bg-surface: rgba(16, 28, 48, 0.72);
+    --bg-card: rgba(11, 20, 36, 0.74);
+    --bg-card-hover: rgba(18, 32, 56, 0.84);
+    --panel: rgba(11, 20, 36, 0.74);
+    --panel-hover: rgba(16, 28, 48, 0.82);
+    --panel-elevated: rgba(16, 28, 48, 0.80);
+    --panel-line: rgba(27, 52, 75, 0.75);
+    --panel-line-hover: rgba(0, 217, 255, 0.5);
+    --input-bg: rgba(16, 28, 48, 0.72);
+    --input-focus-bg: rgba(20, 36, 61, 0.88);
+    --dropzone-bg: radial-gradient(circle at 50% 50%, rgba(0, 217, 255, 0.06), transparent 75%), rgba(8, 15, 30, 0.65);
+    --dropzone-hover-bg: radial-gradient(circle at 50% 50%, rgba(0, 217, 255, 0.12), transparent 75%), rgba(13, 24, 43, 0.75);
     
     /* Text Hierarchy */
     --ink: #EAF6FF;
@@ -62,8 +69,8 @@
     --error-color: #FF526A;
     --error-dim: rgba(255, 82, 106, 0.14);
 
-    --glass-blur: blur(16px);
-    --header-bg: rgba(11, 20, 36, 0.92);
+    --glass-blur: blur(18px);
+    --header-bg: rgba(7, 13, 24, 0.85);
     --grid-major: rgba(0, 217, 255, 0.055);
     --grid-minor: rgba(27, 52, 75, 0.28);
     --grid-dot: rgba(0, 217, 255, 0.16);
@@ -81,25 +88,25 @@
   }
 
   [data-theme="light"] {
-    /* ☀️ Light Mode Theme Tokens — warm cream palette */
-    --bg: #FAF3E4;
-    --bg-surface: #F2E8D4;
-    --bg-card: #FFFCF4;
-    --bg-card-hover: #FBF3E2;
-    --panel: #FFFCF4;
-    --panel-hover: #FAF1DF;
-    --panel-elevated: #F2E8D4;
-    --panel-line: #E3D5B6;
-    --panel-line-hover: #CDB98D;
-    --input-bg: #F2E8D4;
-    --input-focus-bg: #FFFDF8;
-    --dropzone-bg: radial-gradient(circle at 50% 50%, rgba(0, 159, 196, 0.05), transparent 75%), #F6EEDA;
-    --dropzone-hover-bg: radial-gradient(circle at 50% 50%, rgba(0, 159, 196, 0.09), transparent 75%), #F0E4C6;
+    /* ☀️ Light Mode Theme Tokens (Exact User Specification with Glassmorphic Translucency) */
+    --bg: #F4F8FC;
+    --bg-surface: #EAF2F8;
+    --bg-card: rgba(255, 255, 255, 0.88);
+    --bg-card-hover: #FFFFFF;
+    --panel: rgba(255, 255, 255, 0.88);
+    --panel-hover: #EAF2F8;
+    --panel-elevated: #EAF2F8;
+    --panel-line: #D5E1EB;
+    --panel-line-hover: #009FC4;
+    --input-bg: #EAF2F8;
+    --input-focus-bg: #FFFFFF;
+    --dropzone-bg: radial-gradient(circle at 50% 50%, rgba(0, 159, 196, 0.05), transparent 75%), #F0F6FA;
+    --dropzone-hover-bg: radial-gradient(circle at 50% 50%, rgba(0, 159, 196, 0.09), transparent 75%), #E5EFF7;
 
     /* Text Hierarchy */
-    --ink: #2B2318;
-    --ink-dim: #7A6F58;
-    --ink-muted: #A5987B;
+    --ink: #172337;
+    --ink-dim: #607086;
+    --ink-muted: #8EA4BF;
 
     /* Functional Color Tokens */
     /* 🛰️ Primary / Cyan → Satellite / Remote Sensing / Sentinel-2 / Grounding / Active Tabs / Primary Buttons */
@@ -108,7 +115,7 @@
     --cyan-glow: rgba(0, 159, 196, 0.28);
     --primary-gradient: linear-gradient(135deg, #009FC4 0%, #007C9A 100%);
     --primary-hover: linear-gradient(135deg, #00B1DC 0%, #008DAF 100%);
-    --primary-btn-ink: #FFFCF4;
+    --primary-btn-ink: #FFFFFF;
     --satellite-accent: #009FC4;
     --satellite-accent-dim: rgba(0, 159, 196, 0.12);
 
@@ -125,28 +132,31 @@
     --success-dim: rgba(21, 155, 112, 0.12);
 
     /* 🟠 Amber → Change Detected / Warnings / Important Attention */
-    --amber: #C57F00;
-    --warn-color: #C57F00;
-    --warn-dim: rgba(197, 127, 0, 0.14);
+    --amber: #D88A00;
+    --warn-color: #D88A00;
+    --warn-dim: rgba(216, 138, 0, 0.14);
 
     /* 🔴 Red → Errors / Logout / Failed Analysis */
     --danger: #D83B52;
     --error-color: #D83B52;
     --error-dim: rgba(216, 59, 82, 0.12);
 
-    --glass-blur: blur(16px);
-    --header-bg: rgba(250, 243, 228, 0.94);
-    --grid-major: rgba(0, 159, 196, 0.07);
-    --grid-minor: rgba(205, 185, 141, 0.35);
+    --glass-blur: blur(18px);
+    --header-bg: rgba(244, 248, 252, 0.90);
+    --grid-major: rgba(0, 159, 196, 0.06);
+    --grid-minor: rgba(213, 225, 235, 0.35);
     --grid-dot: rgba(0, 159, 196, 0.16);
-    --shadow-sm: 0 2px 8px rgba(60, 48, 24, 0.06);
-    --shadow-md: 0 6px 18px rgba(60, 48, 24, 0.08);
-    --shadow-lg: 0 12px 32px rgba(60, 48, 24, 0.12);
+    --shadow-sm: 0 2px 8px rgba(23, 35, 55, 0.06);
+    --shadow-md: 0 6px 18px rgba(23, 35, 55, 0.08);
+    --shadow-lg: 0 12px 32px rgba(23, 35, 55, 0.12);
     --shadow-glow: 0 0 16px rgba(0, 159, 196, 0.12);
-    --modal-bg: #FFFCF4;
-    --modal-backdrop: rgba(43, 35, 24, 0.5);
-    --trace-bg: #F6EEDA;
-    --code-box-bg: #F2E8D4;
+    --modal-bg: #FFFFFF;
+    --modal-backdrop: rgba(23, 35, 55, 0.5);
+    --trace-bg: #F0F6FA;
+    --code-box-bg: #EAF2F8;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
   }
 
   * { box-sizing: border-box; }
@@ -154,36 +164,28 @@
     margin: 0;
     background-color: var(--bg);
     background-image:
-      /* Ambient Multi-Spectral Nebulae / Sensor Glows */
-      radial-gradient(ellipse 90% 60% at 50% -25%, var(--satellite-accent-dim), transparent 70%),
-      radial-gradient(circle at 92% 75%, rgba(0, 217, 255, 0.05), transparent 45%),
-      radial-gradient(circle at 8% 35%, var(--ai-dim), transparent 45%),
-      /* Cartographic Micro Coordinate Crosshairs / Dots at Grid Intersections */
-      radial-gradient(circle, var(--grid-dot) 1px, transparent 1.2px),
-      /* Primary 96px Major Spatial Grid */
+      /* Radial vignettes to ensure high text contrast */
+      linear-gradient(to right, rgba(5, 10, 20, 0.92) 0%, rgba(5, 10, 20, 0.72) 48%, rgba(5, 10, 20, 0.25) 80%, rgba(5, 10, 20, 0.45) 100%),
+      /* Atmospheric cyan nebula at top */
+      radial-gradient(ellipse 90% 50% at 50% -20%, rgba(0, 217, 255, 0.15), transparent 70%),
+      /* High-Definition Orbital Low Earth & Satellite Wallpaper */
+      url('orbital_earth_bg.jpg'),
+      /* Major 96px Geodetic Grid Layer */
       linear-gradient(var(--grid-major) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
-      /* Secondary 24px Precision Ortho Grid */
-      linear-gradient(var(--grid-minor) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px);
     background-size:
       100% 100%,
       100% 100%,
-      100% 100%,
+      cover,
       96px 96px,
-      96px 96px,
-      96px 96px,
-      24px 24px,
-      24px 24px;
+      96px 96px;
     background-position:
       center center,
+      center top,
       center center,
-      center center,
-      0 0,
-      0 0,
-      0 0,
       0 0,
       0 0;
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
     background-attachment: fixed;
     color: var(--ink);
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -195,17 +197,17 @@
   [data-theme="light"] body {
     background-image:
       /* Light Mode Crisp Ambient Illumination */
-      radial-gradient(ellipse 90% 60% at 50% -25%, rgba(0, 159, 196, 0.08), transparent 70%),
-      radial-gradient(circle at 92% 75%, rgba(0, 168, 143, 0.05), transparent 45%),
-      radial-gradient(circle at 8% 35%, rgba(104, 87, 217, 0.04), transparent 45%),
-      /* Coordinate Dots */
-      radial-gradient(circle, var(--grid-dot) 1.2px, transparent 1.4px),
-      /* Major 96px Grid */
+      linear-gradient(to right, rgba(244, 248, 252, 0.94) 0%, rgba(244, 248, 252, 0.88) 55%, rgba(244, 248, 252, 0.78) 100%),
+      radial-gradient(ellipse 90% 50% at 50% -20%, rgba(0, 159, 196, 0.10), transparent 70%),
+      url('orbital_earth_bg.jpg'),
       linear-gradient(var(--grid-major) 1.2px, transparent 1.2px),
-      linear-gradient(90deg, var(--grid-major) 1.2px, transparent 1.2px),
-      /* Minor 24px Precision Grid */
-      linear-gradient(var(--grid-minor) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+      linear-gradient(90deg, var(--grid-major) 1.2px, transparent 1.2px);
+    background-size:
+      100% 100%,
+      100% 100%,
+      cover,
+      96px 96px,
+      96px 96px;
   }
   .mono { font-family: 'JetBrains Mono', monospace; }
 
@@ -1300,7 +1302,7 @@
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 <script src="segmentation.js"></script>
 <script>
-  const API_BASE = "http://localhost:8000";
+  const API_BASE = window.location.protocol.startsWith("http") ? window.location.origin : "http://localhost:8000";
 
   // ---------- JWT Authentication & Session State ----------
   const authToken = localStorage.getItem("satquery_token");
@@ -1309,8 +1311,19 @@
     currentUser = JSON.parse(localStorage.getItem("satquery_user") || "null");
   } catch(e) { currentUser = null; }
 
-  // Redirect to login screen if not authenticated
-  if (!authToken || !currentUser) {
+  const isPreview = new URLSearchParams(window.location.search).get("preview") === "1";
+  if (isPreview && !currentUser) {
+    currentUser = { username: "ISRO Lead Analyst", email: "analyst@isro.gov.in" };
+  }
+
+  // Gracefully handle case where token exists but user object is not parsed yet
+  if (authToken && !currentUser) {
+    currentUser = { username: "ISRO Analyst", email: "analyst@satquery.ai" };
+    try { localStorage.setItem("satquery_user", JSON.stringify(currentUser)); } catch(e){}
+  }
+
+  // Redirect to login screen only if not authenticated and not preview
+  if (!isPreview && !authToken) {
     window.location.href = "login.html";
   }
 
