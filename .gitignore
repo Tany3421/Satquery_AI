@@ -25,3 +25,8 @@ backend/uploads/*
 .DS_Store
 .vscode/
 .idea/
+~$*
+*.tmp
+backend/weights/*
+!backend/weights/.gitkeep
+

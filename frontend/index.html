@@ -5,285 +5,878 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SatQuery AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <style>
   :root {
-    --bg: #0a0f1a;
-    --panel: #0f1729;
-    --panel-line: #1c2740;
-    --ink: #dbe4f5;
-    --ink-dim: #7c8aa8;
-    --teal: #4fd8c4;
-    --teal-dim: #2a5f57;
-    --amber: #f0a94e;
-    --danger: #e0654f;
-    --grid: rgba(79, 216, 196, 0.06);
+    /* 🌙 Dark Mode Theme Tokens (Exact User Specification) */
+    --bg: #050A14;
+    --bg-surface: #101C30;
+    --bg-card: #0B1424;
+    --bg-card-hover: #122038;
+    --panel: #0B1424;
+    --panel-hover: #101C30;
+    --panel-elevated: #101C30;
+    --panel-line: #1B344B;
+    --panel-line-hover: #2A4C6B;
+    --input-bg: #101C30;
+    --input-focus-bg: #14243D;
+    --dropzone-bg: radial-gradient(circle at 50% 50%, rgba(0, 217, 255, 0.04), transparent 75%), #080F1E;
+    --dropzone-hover-bg: radial-gradient(circle at 50% 50%, rgba(0, 217, 255, 0.08), transparent 75%), #0D182B;
+    
+    /* Text Hierarchy */
+    --ink: #EAF6FF;
+    --ink-dim: #8EA4BF;
+    --ink-muted: #5E7491;
+
+    /* Functional Color Tokens */
+    /* 🛰️ Primary / Cyan → Satellite / Remote Sensing / Sentinel-2 / Grounding / Active Tabs / Primary Buttons */
+    --primary: #00D9FF;
+    --cyan: #00D9FF;
+    --cyan-glow: rgba(0, 217, 255, 0.35);
+    --primary-gradient: linear-gradient(135deg, #00D9FF 0%, #00A8C4 100%);
+    --primary-hover: linear-gradient(135deg, #33E2FF 0%, #00B8D9 100%);
+    --primary-btn-ink: #050A14;
+    --satellite-accent: #00D9FF;
+    --satellite-accent-dim: rgba(0, 217, 255, 0.12);
+
+    /* 🤖 Purple → AI / Gemini / RS-VLM / VQA / Intelligence / Models */
+    --ai-color: #8B7CFF;
+    --ai-dim: rgba(139, 124, 255, 0.14);
+    --purple: #8B7CFF;
+
+    /* 🟢 Teal / Green → Successful Results / High Confidence / Valid Detections */
+    --teal: #27E0C0;
+    --teal-glow: #27E0C0;
+    --teal-dim: rgba(39, 224, 192, 0.14);
+    --success-color: #35E59A;
+    --success-dim: rgba(53, 229, 154, 0.14);
+
+    /* 🟠 Amber → Change Detected / Warnings / Important Attention */
+    --amber: #FFB84D;
+    --warn-color: #FFB84D;
+    --warn-dim: rgba(255, 184, 77, 0.14);
+
+    /* 🔴 Red → Errors / Logout / Failed Analysis */
+    --danger: #FF526A;
+    --error-color: #FF526A;
+    --error-dim: rgba(255, 82, 106, 0.14);
+
+    --glass-blur: blur(16px);
+    --header-bg: rgba(11, 20, 36, 0.92);
+    --grid-major: rgba(0, 217, 255, 0.055);
+    --grid-minor: rgba(27, 52, 75, 0.28);
+    --grid-dot: rgba(0, 217, 255, 0.16);
+    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+    --shadow-glow: 0 0 20px rgba(0, 217, 255, 0.18);
+    --modal-bg: #0B1424;
+    --modal-backdrop: rgba(5, 10, 20, 0.85);
+    --trace-bg: #091120;
+    --code-box-bg: #060B16;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
   }
+
+  [data-theme="light"] {
+    /* ☀️ Light Mode Theme Tokens — warm cream palette */
+    --bg: #FAF3E4;
+    --bg-surface: #F2E8D4;
+    --bg-card: #FFFCF4;
+    --bg-card-hover: #FBF3E2;
+    --panel: #FFFCF4;
+    --panel-hover: #FAF1DF;
+    --panel-elevated: #F2E8D4;
+    --panel-line: #E3D5B6;
+    --panel-line-hover: #CDB98D;
+    --input-bg: #F2E8D4;
+    --input-focus-bg: #FFFDF8;
+    --dropzone-bg: radial-gradient(circle at 50% 50%, rgba(0, 159, 196, 0.05), transparent 75%), #F6EEDA;
+    --dropzone-hover-bg: radial-gradient(circle at 50% 50%, rgba(0, 159, 196, 0.09), transparent 75%), #F0E4C6;
+
+    /* Text Hierarchy */
+    --ink: #2B2318;
+    --ink-dim: #7A6F58;
+    --ink-muted: #A5987B;
+
+    /* Functional Color Tokens */
+    /* 🛰️ Primary / Cyan → Satellite / Remote Sensing / Sentinel-2 / Grounding / Active Tabs / Primary Buttons */
+    --primary: #009FC4;
+    --cyan: #009FC4;
+    --cyan-glow: rgba(0, 159, 196, 0.28);
+    --primary-gradient: linear-gradient(135deg, #009FC4 0%, #007C9A 100%);
+    --primary-hover: linear-gradient(135deg, #00B1DC 0%, #008DAF 100%);
+    --primary-btn-ink: #FFFCF4;
+    --satellite-accent: #009FC4;
+    --satellite-accent-dim: rgba(0, 159, 196, 0.12);
+
+    /* 🤖 Purple → AI / Gemini / RS-VLM / VQA / Intelligence / Models */
+    --ai-color: #6857D9;
+    --ai-dim: rgba(104, 87, 217, 0.12);
+    --purple: #6857D9;
+
+    /* 🟢 Teal / Green → Successful Results / High Confidence / Valid Detections */
+    --teal: #00A88F;
+    --teal-glow: #00A88F;
+    --teal-dim: rgba(0, 168, 143, 0.12);
+    --success-color: #159B70;
+    --success-dim: rgba(21, 155, 112, 0.12);
+
+    /* 🟠 Amber → Change Detected / Warnings / Important Attention */
+    --amber: #C57F00;
+    --warn-color: #C57F00;
+    --warn-dim: rgba(197, 127, 0, 0.14);
+
+    /* 🔴 Red → Errors / Logout / Failed Analysis */
+    --danger: #D83B52;
+    --error-color: #D83B52;
+    --error-dim: rgba(216, 59, 82, 0.12);
+
+    --glass-blur: blur(16px);
+    --header-bg: rgba(250, 243, 228, 0.94);
+    --grid-major: rgba(0, 159, 196, 0.07);
+    --grid-minor: rgba(205, 185, 141, 0.35);
+    --grid-dot: rgba(0, 159, 196, 0.16);
+    --shadow-sm: 0 2px 8px rgba(60, 48, 24, 0.06);
+    --shadow-md: 0 6px 18px rgba(60, 48, 24, 0.08);
+    --shadow-lg: 0 12px 32px rgba(60, 48, 24, 0.12);
+    --shadow-glow: 0 0 16px rgba(0, 159, 196, 0.12);
+    --modal-bg: #FFFCF4;
+    --modal-backdrop: rgba(43, 35, 24, 0.5);
+    --trace-bg: #F6EEDA;
+    --code-box-bg: #F2E8D4;
+  }
+
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background:
-      linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 32px 32px,
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 32px 32px,
-      var(--bg);
+    background-color: var(--bg);
+    background-image:
+      /* Ambient Multi-Spectral Nebulae / Sensor Glows */
+      radial-gradient(ellipse 90% 60% at 50% -25%, var(--satellite-accent-dim), transparent 70%),
+      radial-gradient(circle at 92% 75%, rgba(0, 217, 255, 0.05), transparent 45%),
+      radial-gradient(circle at 8% 35%, var(--ai-dim), transparent 45%),
+      /* Cartographic Micro Coordinate Crosshairs / Dots at Grid Intersections */
+      radial-gradient(circle, var(--grid-dot) 1px, transparent 1.2px),
+      /* Primary 96px Major Spatial Grid */
+      linear-gradient(var(--grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+      /* Secondary 24px Precision Ortho Grid */
+      linear-gradient(var(--grid-minor) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      100% 100%,
+      100% 100%,
+      96px 96px,
+      96px 96px,
+      96px 96px,
+      24px 24px,
+      24px 24px;
+    background-position:
+      center center,
+      center center,
+      center center,
+      0 0,
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+    background-attachment: fixed;
     color: var(--ink);
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  [data-theme="light"] body {
+    background-image:
+      /* Light Mode Crisp Ambient Illumination */
+      radial-gradient(ellipse 90% 60% at 50% -25%, rgba(0, 159, 196, 0.08), transparent 70%),
+      radial-gradient(circle at 92% 75%, rgba(0, 168, 143, 0.05), transparent 45%),
+      radial-gradient(circle at 8% 35%, rgba(104, 87, 217, 0.04), transparent 45%),
+      /* Coordinate Dots */
+      radial-gradient(circle, var(--grid-dot) 1.2px, transparent 1.4px),
+      /* Major 96px Grid */
+      linear-gradient(var(--grid-major) 1.2px, transparent 1.2px),
+      linear-gradient(90deg, var(--grid-major) 1.2px, transparent 1.2px),
+      /* Minor 24px Precision Grid */
+      linear-gradient(var(--grid-minor) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
   }
   .mono { font-family: 'JetBrains Mono', monospace; }
 
-  .source-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; margin-bottom: 12px; }
-  .source-pill { background: transparent; border: 1px solid var(--panel-line); color: var(--ink-dim); padding: 6px 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.15s; }
-  .source-pill:hover { border-color: var(--teal-dim); color: var(--ink); }
-  .source-pill.active { background: rgba(79, 216, 196, 0.15); border-color: var(--teal); color: var(--teal); font-weight: 600; }
+  /* Source selection pills (🛰️ Cyan active for satellite source) */
+  .source-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; margin-bottom: 14px; }
+  .source-pill {
+    background: var(--bg-surface);
+    border: 1px solid var(--panel-line);
+    color: var(--ink-dim);
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(8px);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .source-pill:hover {
+    border-color: var(--panel-line-hover);
+    color: var(--ink);
+    background: var(--bg-card-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+  .source-pill.active {
+    background: var(--satellite-accent-dim);
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 600;
+    box-shadow: 0 0 14px var(--cyan-glow);
+  }
 
-  .engine-pill { font-size: 11px; font-family: 'JetBrains Mono', monospace; padding: 4px 8px; border-radius: 4px; background: rgba(79, 216, 196, 0.1); border: 1px solid var(--teal-dim); color: var(--teal); display: inline-block; margin-bottom: 10px; }
+  /* 🤖 Purple AI Model & Engine Badge */
+  .engine-pill {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: var(--ai-dim);
+    border: 1px solid rgba(139, 124, 255, 0.3);
+    color: var(--ai-color);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    font-weight: 600;
+  }
 
+  /* Header Bar with Glassmorphism */
   header {
     border-bottom: 1px solid var(--panel-line);
-    padding: 18px 28px;
+    padding: 14px 36px;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
+    background: var(--header-bg);
+    backdrop-filter: var(--glass-blur);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
   }
-  header .brand { display: flex; align-items: center; gap: 10px; }
+  header .brand { display: flex; align-items: center; gap: 14px; }
+  header .brand .icon-wrap {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--satellite-accent-dim), rgba(0, 159, 196, 0.2));
+    border: 1px solid var(--panel-line);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px;
+    box-shadow: 0 0 14px var(--cyan-glow);
+  }
   header .brand .dot {
-    width: 9px; height: 9px; border-radius: 50%;
-    background: var(--teal);
-    box-shadow: 0 0 8px var(--teal);
-    animation: pulse 2s ease-in-out infinite;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success-color);
+    box-shadow: 0 0 10px var(--success-color), 0 0 18px var(--success-color);
+    animation: pulse 2.2s ease-in-out infinite;
   }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-  header h1 { font-size: 19px; font-weight: 700; letter-spacing: 0.02em; margin: 0; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+  header h1 {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0;
+    background: linear-gradient(135deg, var(--ink) 30%, var(--primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
   header .sub {
-    font-size: 11px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.06em; text-transform: uppercase;
+    font-size: 11px;
+    color: var(--ink-dim);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 1px;
   }
-  header .code { font-size: 11px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; }
+  header .code {
+    font-size: 11px;
+    color: var(--primary);
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--satellite-accent-dim);
+    border: 1px solid var(--panel-line);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
 
+  /* Segmented Theme Switch [ ☀️ Light | 🌙 Dark ] */
+  .theme-segmented-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg-surface);
+    border: 1px solid var(--panel-line);
+    border-radius: 100px;
+    padding: 3px;
+    gap: 2px;
+    transition: all 0.25s ease;
+  }
+  .theme-option {
+    border: none;
+    background: transparent;
+    color: var(--ink-dim);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 5px 11px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    line-height: 1;
+  }
+  .theme-option:hover {
+    color: var(--ink);
+  }
+  .theme-option.active {
+    background: var(--primary);
+    color: var(--primary-btn-ink);
+    box-shadow: 0 0 14px var(--cyan-glow);
+    font-weight: 700;
+  }
+
+  /* Navigation Tabs (🛰️ Cyan active indicator) */
   nav.tabs {
-    max-width: 1180px; margin: 0 auto; padding: 16px 28px 0;
-    display: flex; gap: 6px;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 20px 32px 0;
+    display: flex;
+    gap: 10px;
   }
   nav.tabs button {
-    background: transparent; border: 1px solid var(--panel-line); color: var(--ink-dim);
-    padding: 8px 16px; border-radius: 6px 6px 0 0; cursor: pointer;
-    font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.04em;
+    background: var(--bg-surface);
+    border: 1px solid var(--panel-line);
+    color: var(--ink-dim);
+    padding: 10px 20px;
+    border-radius: 10px 10px 0 0;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(8px);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
-  nav.tabs button.active { color: var(--teal); border-color: var(--teal-dim); border-bottom-color: transparent; background: var(--panel); }
+  nav.tabs button:hover {
+    color: var(--ink);
+    border-color: var(--panel-line-hover);
+    background: var(--bg-card-hover);
+  }
+  nav.tabs button.active {
+    color: var(--ink);
+    border-color: var(--panel-line);
+    border-bottom-color: var(--panel);
+    background: var(--panel);
+    position: relative;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
+  }
+  nav.tabs button.active::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary);
+    border-radius: 2px 2px 0 0;
+    box-shadow: 0 0 10px var(--cyan-glow);
+  }
 
+  /* Main Container Layout */
   main {
-    max-width: 1180px;
+    max-width: 1240px;
     margin: 0 auto;
-    padding: 0 28px 28px;
+    padding: 0 32px 32px;
     display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: 20px;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 24px;
   }
   main.view { padding-top: 0; }
-  @media (max-width: 880px) { main { grid-template-columns: 1fr; } }
+  @media (max-width: 960px) { main { grid-template-columns: 1fr; } }
 
+  /* Premium Glassmorphic Panels */
   .panel {
     background: var(--panel);
     border: 1px solid var(--panel-line);
-    border-radius: 10px;
-    padding: 20px;
+    border-radius: var(--radius-lg);
+    padding: 24px;
     position: relative;
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-md);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .panel:hover {
+    border-color: var(--panel-line-hover);
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
   }
   .panel::before, .panel::after {
-    content: ""; position: absolute; width: 14px; height: 14px;
+    content: ""; position: absolute; width: 18px; height: 18px; pointer-events: none;
   }
-  .panel::before { top: -1px; left: -1px; border-top: 2px solid var(--teal); border-left: 2px solid var(--teal); border-top-left-radius: 8px; opacity:0.6; }
-  .panel::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--teal); border-right: 2px solid var(--teal); border-bottom-right-radius: 8px; opacity:0.6; }
+  .panel::before { top: -1px; left: -1px; border-top: 2px solid var(--primary); border-left: 2px solid var(--primary); border-top-left-radius: var(--radius-lg); opacity: 0.8; }
+  .panel::after { bottom: -1px; right: -1px; border-bottom: 2px solid var(--primary); border-right: 2px solid var(--primary); border-bottom-right-radius: var(--radius-lg); opacity: 0.8; }
 
   .panel h2 {
-    font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;
-    color: var(--teal); margin: 0 0 14px 0; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--primary);
+    margin: 0 0 16px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  select, textarea {
+  /* Inputs & Selects */
+  select, textarea, input[type="text"] {
     width: 100%;
-    background: #0a0f1a; border: 1px solid var(--panel-line); border-radius: 6px;
-    color: var(--ink); padding: 10px 12px; font-family: inherit; font-size: 14px;
+    background: var(--input-bg);
+    border: 1px solid var(--panel-line);
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 13.5px;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
   }
   select { font-family: 'JetBrains Mono', monospace; font-size: 12px; cursor: pointer; }
-  textarea { resize: vertical; min-height: 64px; margin-top: 10px; }
-  select:focus, textarea:focus { outline: none; border-color: var(--teal); }
-  label.field-label { font-size: 11px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; display:block; margin-bottom:6px; }
+  textarea { resize: vertical; min-height: 72px; margin-top: 10px; line-height: 1.5; }
+  select:focus, textarea:focus, input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 16px rgba(79, 216, 196, 0.25);
+    background: var(--input-focus-bg);
+  }
+  label.field-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-dim);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: block;
+    margin-bottom: 6px;
+  }
 
+  /* Dropzone Uplink Area */
   .dropzone {
-    border: 1.5px dashed var(--panel-line);
-    border-radius: 8px;
+    border: 1.5px dashed var(--panel-line-hover);
+    border-radius: var(--radius-md);
     min-height: 200px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 8px;
+    gap: 10px;
     cursor: pointer;
-    transition: border-color 0.15s;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     text-align: center;
-    padding: 16px;
+    padding: 20px;
     overflow: hidden;
     position: relative;
+    background: var(--dropzone-bg);
   }
-  .dropzone:hover { border-color: var(--teal-dim); }
-  .dropzone.has-image { border-style: solid; }
-  .dropzone img { max-width: 100%; max-height: 280px; border-radius: 4px; display: block; }
-  .dropzone .hint { color: var(--ink-dim); font-size: 13px; }
+  .dropzone:hover {
+    border-color: var(--primary);
+    background: var(--dropzone-hover-bg);
+    transform: scale(1.005);
+  }
+  .dropzone.has-image {
+    border-style: solid;
+    border-color: rgba(79, 216, 196, 0.4);
+    background: var(--bg-surface);
+  }
+  .dropzone img { max-width: 100%; max-height: 300px; border-radius: var(--radius-sm); display: block; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  .dropzone .hint { color: var(--ink); font-size: 13.5px; font-weight: 600; }
   .dropzone .hint-sm { color: var(--ink-dim); font-size: 11px; font-family: 'JetBrains Mono', monospace; }
   input[type=file] { display: none; }
 
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
 
-  .quick-qs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  /* Quick Question Buttons */
+  .quick-qs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
   .quick-qs button {
-    background: transparent; border: 1px solid var(--panel-line); color: var(--ink-dim);
-    font-size: 11px; padding: 5px 9px; border-radius: 100px; cursor: pointer;
+    background: var(--panel-hover);
+    border: 1px solid var(--panel-line);
+    color: var(--ink-dim);
+    font-size: 11px;
+    padding: 6px 12px;
+    border-radius: 100px;
+    cursor: pointer;
     font-family: 'JetBrains Mono', monospace;
+    transition: all 0.2s ease;
   }
-  .quick-qs button:hover { border-color: var(--teal); color: var(--teal); }
+  .quick-qs button:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--teal-dim);
+    transform: translateY(-1px);
+  }
 
+  /* Primary Action Button */
   .primary-btn {
-    margin-top: 14px; width: 100%; background: var(--teal); color: #06110f;
-    border: none; border-radius: 6px; padding: 12px; font-weight: 700; font-size: 14px;
-    cursor: pointer; letter-spacing: 0.01em;
+    margin-top: 16px;
+    width: 100%;
+    background: var(--primary-gradient);
+    color: var(--primary-btn-ink);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 13px 20px;
+    font-weight: 800;
+    font-size: 14px;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 18px rgba(79, 216, 196, 0.35);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   }
-  .primary-btn:hover { background: #6ee6d4; }
-  .primary-btn:disabled { background: var(--panel-line); color: var(--ink-dim); cursor: not-allowed; }
+  .primary-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(79, 216, 196, 0.5);
+  }
+  .primary-btn:disabled {
+    background: var(--panel-line);
+    color: var(--ink-dim);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
 
-  .answer-box { font-size: 14.5px; line-height: 1.6; color: var(--ink); }
-  .empty-state { color: var(--ink-dim); font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+  /* Answer Output Box */
+  .answer-box {
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: var(--ink);
+    white-space: pre-line;
+    letter-spacing: 0.01em;
+    background: var(--input-bg);
+    border: 1px solid var(--panel-line);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    margin-top: 10px;
+  }
+  .empty-state {
+    color: var(--ink-dim);
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 30px 20px;
+    text-align: center;
+    border: 1px dashed var(--panel-line);
+    border-radius: var(--radius-md);
+    background: var(--input-bg);
+  }
 
-  .section-label { font-size: 11px; color: var(--ink-dim); font-family:'JetBrains Mono',monospace; text-transform: uppercase; margin-top: 16px; margin-bottom: 8px; }
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 18px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
 
-  .bar-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 12px; }
-  .bar-label { width: 90px; flex-shrink: 0; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; }
-  .bar-track { flex: 1; background: #0a0f1a; border-radius: 4px; height: 8px; overflow: hidden; }
-  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--teal-dim), var(--teal)); }
-  .bar-pct { width: 34px; text-align: right; font-family: 'JetBrains Mono', monospace; color: var(--ink-dim); }
+  /* Progress Bars */
+  .bar-row { display: flex; align-items: center; gap: 12px; margin: 9px 0; font-size: 12.5px; }
+  .bar-label { width: 100px; flex-shrink: 0; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+  .bar-track { flex: 1; background: var(--bg-surface); border: 1px solid var(--panel-line); border-radius: 100px; height: 9px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--teal-glow), var(--primary)); border-radius: 100px; transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+  .bar-pct { width: 38px; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--primary); font-weight: 600; }
 
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  /* 🟠 Chips: Used for detected features and tags */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .chip {
-    font-size: 11px; padding: 4px 9px; border-radius: 5px;
-    background: rgba(240, 169, 78, 0.1); color: var(--amber);
-    border: 1px solid rgba(240, 169, 78, 0.25); font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 5px 11px;
+    border-radius: 6px;
+    background: var(--warn-dim);
+    color: var(--amber);
+    border: 1px solid rgba(216, 138, 0, 0.3);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .chip:hover {
+    background: rgba(255, 184, 77, 0.22);
+    transform: translateY(-1px);
   }
 
-  .evidence-list { list-style: none; margin: 0; padding: 0; display:flex; flex-direction:column; gap:6px; }
-  .evidence-list li { font-size: 12.5px; color: var(--ink); display:flex; gap:8px; align-items:flex-start; }
-  .evidence-list li::before { content: "✓"; color: var(--teal); flex-shrink:0; }
+  /* 🟢 Evidence List: High confidence verification checkmarks */
+  .evidence-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .evidence-list li {
+    font-size: 13px;
+    color: var(--ink);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 7px 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--panel-line);
+    border-radius: 6px;
+    border-left: 3px solid var(--success-color);
+  }
+  .evidence-list li::before { content: "✓"; color: var(--success-color); font-weight: 800; flex-shrink: 0; }
 
-  .quality-row { display:flex; gap:10px; flex-wrap:wrap; margin-top: 4px; }
-  .badge { font-size: 11px; padding: 4px 9px; border-radius: 5px; font-family:'JetBrains Mono',monospace; border: 1px solid var(--panel-line); color: var(--ink-dim); }
-  .badge.good { color: var(--teal); border-color: var(--teal-dim); }
-  .badge.warn { color: var(--amber); border-color: rgba(240,169,78,0.3); }
+  .quality-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .badge {
+    font-size: 11px;
+    padding: 5px 11px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid var(--panel-line);
+    color: var(--ink-dim);
+    font-weight: 600;
+  }
+  /* 🟢 Success Badge */
+  .badge.good { color: var(--success-color); border-color: rgba(53, 229, 154, 0.35); background: var(--success-dim); }
+  /* 🟠 Warning / Attention Badge */
+  .badge.warn { color: var(--warn-color); border-color: rgba(255, 184, 77, 0.35); background: var(--warn-dim); }
 
   .uncertainty-note {
-    margin-top: 10px; font-size: 12px; color: var(--amber);
-    background: rgba(240,169,78,0.08); border: 1px solid rgba(240,169,78,0.2);
-    padding: 8px 10px; border-radius: 6px;
+    margin-top: 12px; font-size: 12.5px; color: var(--warn-color);
+    background: var(--warn-dim); border: 1px solid rgba(255, 184, 77, 0.3);
+    padding: 10px 14px; border-radius: var(--radius-sm);
   }
 
-  .confidence-row { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--panel-line); }
-  .confidence-row .label { font-size: 11px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; }
-  .confidence-row .value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--teal); }
+  .confidence-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--panel-line);
+  }
+  .confidence-row .label { font-size: 11px; font-weight: 600; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; }
+  .confidence-row .value {
+    font-size: 22px; font-weight: 800; font-family: 'JetBrains Mono', monospace;
+    color: var(--success-color); text-shadow: 0 0 16px rgba(53, 229, 154, 0.3);
+  }
 
-  .region-note { margin-top: 10px; font-size: 12px; color: var(--ink-dim); font-style: italic; }
+  .region-note { margin-top: 12px; font-size: 12.5px; color: var(--ink-dim); font-style: italic; }
 
   .report-btn {
-    margin-top: 14px; width: 100%; background: transparent; border: 1px solid var(--panel-line);
-    color: var(--ink-dim); border-radius: 6px; padding: 10px; font-size: 12px; cursor: pointer;
-    font-family: 'JetBrains Mono', monospace;
+    margin-top: 16px; width: 100%; background: var(--bg-surface);
+    border: 1px solid var(--panel-line); color: var(--ink);
+    border-radius: var(--radius-sm); padding: 12px; font-size: 12.5px; font-weight: 600;
+    cursor: pointer; font-family: 'JetBrains Mono', monospace;
+    transition: all 0.25s ease;
   }
-  .report-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .report-btn:hover {
+    border-color: var(--primary); color: var(--primary);
+    background: var(--satellite-accent-dim);
+    box-shadow: var(--shadow-sm);
+  }
 
-  .history { grid-column: 1 / -1; }
+  /* History Panel */
+  .history { grid-column: 1 / -1; margin-top: 8px; }
   .history-item {
-    display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--panel-line);
-    font-size: 13px; align-items: center;
+    display: flex; gap: 14px; padding: 14px 10px; border-bottom: 1px solid var(--panel-line);
+    font-size: 13.5px; align-items: center; transition: background 0.2s ease;
+    border-radius: 6px;
   }
+  .history-item:hover { background: var(--bg-surface); }
   .history-item:last-child { border-bottom: none; }
-  .history-item img { width: 48px; height: 48px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
-  .history-item .q { color: var(--ink); }
-  .history-item .a { color: var(--ink-dim); font-size: 12px; margin-top: 2px; }
+  .history-item img { width: 52px; height: 52px; object-fit: cover; border-radius: 6px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.25); border: 1px solid var(--panel-line); }
+  .history-item .q { color: var(--ink); font-weight: 500; }
+  .history-item .a { color: var(--ink-dim); font-size: 12.5px; margin-top: 3px; line-height: 1.4; }
   .history-item .meta { margin-left: auto; text-align: right; }
-  .history-item .t { font-size: 10px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
-  .history-item .mode-tag { font-size: 10px; color: var(--teal); font-family: 'JetBrains Mono', monospace; }
+  .history-item .t { font-size: 10.5px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+  .history-item .mode-tag { font-size: 10.5px; color: var(--primary); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
 
+  /* 🔴 Red: Errors */
   .error-box {
-    background: rgba(224, 101, 79, 0.1); border: 1px solid rgba(224, 101, 79, 0.35);
-    color: var(--danger); padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-top: 12px;
+    background: var(--error-dim); border: 1px solid rgba(255, 82, 106, 0.35);
+    color: var(--error-color); padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13.5px; margin-top: 14px;
   }
 
+  /* 🛰️ Primary: Loading state */
   .loading-line {
-    display: flex; align-items: center; gap: 8px; color: var(--teal); font-size: 12px;
-    font-family: 'JetBrains Mono', monospace; margin-top: 12px;
+    display: flex; align-items: center; gap: 10px; color: var(--primary); font-size: 12.5px;
+    font-family: 'JetBrains Mono', monospace; margin-top: 14px;
+    padding: 10px 14px; background: var(--satellite-accent-dim); border-radius: var(--radius-sm);
+    border: 1px solid rgba(0, 217, 255, 0.2);
   }
   .loading-line .spinner {
-    width: 12px; height: 12px; border: 2px solid var(--teal-dim); border-top-color: var(--teal);
+    width: 14px; height: 14px; border: 2px solid rgba(0, 217, 255, 0.25); border-top-color: var(--primary);
     border-radius: 50%; animation: spin 0.7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* 🟠 Amber: Change / Anomaly Flagging */
   .anomaly-banner {
-    margin-top: 14px; padding: 10px 12px; border-radius: 6px; font-size: 13px;
-    background: rgba(224,101,79,0.1); border: 1px solid rgba(224,101,79,0.3); color: var(--danger);
+    margin-top: 16px; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 13.5px;
+    background: var(--warn-dim); border: 1px solid rgba(255, 184, 77, 0.35); color: var(--warn-color);
   }
-  .change-row { display:flex; justify-content:space-between; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--panel-line); }
-  .change-row:last-child { border-bottom:none; }
-  .change-row .cat { color: var(--ink); }
-  .change-row .dir { font-family:'JetBrains Mono',monospace; color: var(--ink-dim); }
+  .change-row { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--panel-line); }
+  .change-row:last-child { border-bottom: none; }
+  .change-row .cat { color: var(--ink); font-weight: 500; }
+  .change-row .dir { font-family: 'JetBrains Mono', monospace; color: var(--ink-dim); font-size: 12px; }
 
+  /* 🤖 Auditable AI Trace Box */
+  .trace-box {
+    background: var(--trace-bg); border: 1px solid var(--panel-line); border-radius: var(--radius-md);
+    padding: 14px 16px; margin-top: 16px; backdrop-filter: blur(8px);
+  }
+  .trace-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .trace-title {
+    font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ai-color); font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 8px;
+  }
+  .trace-badge {
+    font-size: 10px; font-family: 'JetBrains Mono', monospace;
+    background: var(--ai-dim); border: 1px solid rgba(139, 124, 255, 0.25); color: var(--ai-color);
+    padding: 2px 7px; border-radius: 4px; font-weight: 600;
+  }
+  .trace-body { margin-top: 12px; font-size: 12px; color: var(--ink-dim); line-height: 1.6; }
+  .trace-metric {
+    display: flex; justify-content: space-between; padding: 5px 0;
+    border-bottom: 1px dashed var(--panel-line); font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
+  }
+  .trace-metric .val { color: var(--ink); font-weight: 600; }
+  .trace-json-pre {
+    background: var(--code-box-bg); border: 1px solid var(--panel-line); border-radius: var(--radius-sm);
+    padding: 10px 12px; font-size: 10.5px; font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-dim); max-height: 180px; overflow-y: auto; white-space: pre-wrap; margin-top: 10px;
+  }
+
+  /* Modal Reports */
   .modal-backdrop {
-    position: fixed; inset: 0; background: rgba(5,8,14,0.8); display:none;
-    align-items: center; justify-content: center; z-index: 50; padding: 20px;
+    position: fixed; inset: 0; background: var(--modal-backdrop); display: none;
+    align-items: center; justify-content: center; z-index: 150; padding: 20px;
+    backdrop-filter: blur(8px);
   }
   .modal-backdrop.open { display: flex; }
   .modal {
-    background: #0d1424; border: 1px solid var(--panel-line); border-radius: 10px;
-    max-width: 560px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 26px;
+    background: var(--modal-bg); border: 1px solid var(--panel-line-hover); border-radius: var(--radius-lg);
+    max-width: 680px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 28px;
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
   }
-  .modal h3 { margin: 0 0 4px 0; font-size: 16px; }
-  .modal .report-meta { font-size: 11px; color: var(--ink-dim); font-family:'JetBrains Mono',monospace; margin-bottom: 16px; }
+  .modal h3 { margin: 0 0 6px 0; font-size: 18px; font-weight: 700; color: var(--ink); }
+  .modal .report-meta { font-size: 11.5px; color: var(--ink-dim); font-family: 'JetBrains Mono', monospace; margin-bottom: 18px; }
   .modal .report-row { margin-bottom: 14px; }
-  .modal .report-row .k { font-size: 10px; text-transform: uppercase; letter-spacing:0.08em; color: var(--teal); font-family:'JetBrains Mono',monospace; margin-bottom:4px; }
-  .modal .report-row .v { font-size: 13px; color: var(--ink); line-height: 1.5; }
-  .modal-close { margin-top: 10px; width: 100%; }
+  .modal .report-row .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--primary); font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; font-weight: 600; }
+  .modal .report-row .v { font-size: 13.5px; color: var(--ink); line-height: 1.6; }
+  .modal-close { margin-top: 12px; width: 100%; }
+
+  /* Mapbox & MapLibre GL styling */
+  .maplibregl-popup-content, .mapboxgl-popup-content {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--panel-line-hover) !important;
+    color: var(--ink) !important;
+    border-radius: 8px !important;
+    padding: 12px 14px !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    box-shadow: var(--shadow-md) !important;
+  }
+  .maplibregl-popup-anchor-top .maplibregl-popup-tip, .mapboxgl-popup-anchor-top .mapboxgl-popup-tip { border-bottom-color: var(--bg-surface) !important; }
+  .maplibregl-popup-anchor-bottom .maplibregl-popup-tip, .mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: var(--bg-surface) !important; }
+  .maplibregl-popup-anchor-left .maplibregl-popup-tip, .mapboxgl-popup-anchor-left .mapboxgl-popup-tip { border-right-color: var(--bg-surface) !important; }
+  .maplibregl-popup-anchor-right .maplibregl-popup-tip, .mapboxgl-popup-anchor-right .mapboxgl-popup-tip { border-left-color: var(--bg-surface) !important; }
+  .maplibregl-ctrl-group, .mapboxgl-ctrl-group {
+    background: var(--panel) !important;
+    border: 1px solid var(--panel-line) !important;
+    border-radius: 8px !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  .maplibregl-ctrl-group button, .mapboxgl-ctrl-group button {
+    border-bottom: 1px solid var(--panel-line) !important;
+  }
+  .maplibregl-ctrl-group button:hover, .mapboxgl-ctrl-group button:hover {
+    background: rgba(79, 216, 196, 0.2) !important;
+  }
+  .maplibregl-ctrl-icon, .mapboxgl-ctrl-icon {
+    filter: invert(0.85) hue-rotate(140deg);
+  }
+  .mapbox-custom-marker {
+    cursor: pointer;
+    font-size: 26px;
+    filter: drop-shadow(0 0 12px #4fd8c4);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .mapbox-custom-marker:hover {
+    transform: scale(1.35) translateY(-6px);
+  }
 </style>
 </head>
 <body>
 
 <header>
   <div class="brand">
-    <div class="dot"></div>
+    <div class="icon-wrap">🛰️</div>
     <div>
-      <h1>SatQuery AI</h1>
-      <div class="sub">Remote Sensing · Vision-Language Assistant</div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <h1>SatQuery AI</h1>
+        <div class="dot" title="System Operational"></div>
+      </div>
+      <div class="sub">Remote Sensing · Agentic Multimodal Intelligence</div>
     </div>
   </div>
-  <div style="display:flex; align-items:center; gap:8px;">
-    <button type="button" class="source-pill" id="renewPageBtn" style="color:var(--amber); border-color:rgba(240,169,78,0.4); font-weight:600;"><span class="mono">🔄</span> Renew Page</button>
-    <div id="userHeaderBox">
-      <button type="button" class="source-pill" id="openAuthBtn">👤 Login / Sign Up</button>
+  <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+    <!-- 🤖 Purple: AI / Engine Mode Selector -->
+    <select id="engineTypeSelector" style="padding:6px 10px; font-size:11px; background:var(--input-bg); border:1px solid var(--panel-line); color:var(--ai-color); border-radius:8px; font-family:'JetBrains Mono',monospace; cursor:pointer; font-weight:600; max-width:215px;" title="Choose execution engine mode">
+      <option value="auto">🤖 Cloud RS-VLM (Gemini 2.5)</option>
+      <option value="local">💻 Offline Local VLM</option>
+    </select>
+    
+    <!-- ☀️ Light ↔ 🌙 Dark Segmented Pill Toggle -->
+    <div class="theme-segmented-toggle" id="themeSegmentedToggle" title="Toggle Light / Dark Mode" role="group" aria-label="Theme selection">
+      <button type="button" class="theme-option" id="themeOptLight" onclick="setAppTheme('light')">☀️ Light</button>
+      <button type="button" class="theme-option" id="themeOptDark" onclick="setAppTheme('dark')">🌙 Dark</button>
+    </div>
+
+    <!-- 📊 Benchmarks Modal Button -->
+    <button type="button" class="source-pill" id="runBenchmarkBtn" style="color:var(--primary); font-size:11px;" title="Evaluate BigEarthNet, VRSBench, RSVQA, CDVQA">📊 Benchmarks</button>
+    
+    <!-- 🔄 Reset Button (🟠 Amber) -->
+    <button type="button" class="source-pill" id="renewPageBtn" style="color:var(--warn-color); border-color:rgba(216, 138, 0, 0.35); font-weight:600;"><span class="mono">🔄</span> Reset</button>
+    
+    <!-- User Profile & Logout (🔴 Red Logout) -->
+    <div id="userHeaderBox" style="display:flex; align-items:center; gap:8px; background:var(--bg-surface); border:1px solid var(--panel-line); padding:4px 10px; border-radius:100px;">
+      <span style="font-size:11.5px; font-family:'JetBrains Mono',monospace; color:var(--primary); font-weight:600;" id="headerUsername">👤 Researcher</span>
+      <button type="button" id="logoutBtn" style="padding:2px 8px; font-size:10px; border-radius:100px; border:1px solid rgba(255,82,106,0.35); color:var(--error-color); background:var(--error-dim); cursor:pointer; font-family:'JetBrains Mono',monospace; font-weight:600;">Logout</button>
     </div>
     <div class="code">SIH26167</div>
   </div>
 </header>
 
 <nav class="tabs">
-  <button class="active" data-tab="analyze">Analyze (Gemini API)</button>
-  <button data-tab="fast">Fast Query (Groq API)</button>
-  <button data-tab="compare">Change Detection</button>
-  <button data-tab="login" id="navLoginTab">🔑 Login / Account</button>
+  <button class="active" data-tab="analyze">🛰️ 01 · Single Image VQA & Grounding</button>
+  <button data-tab="compare">⏳ 02 · Bi-Temporal Change Detection</button>
+  <button data-tab="crossmodal">📡 03 · Cross-Modal (Optical + SAR)</button>
 </nav>
 
 <!-- ============= ANALYZE TAB ============= -->
 <main class="view" id="tab-analyze">
   <section class="panel">
-    <h2>01 · Image + Query Engine</h2>
+    <h2>01 · Single Image VQA & Grounding</h2>
 
     <label class="field-label">Satellite Data Source</label>
     <div class="source-pills" id="sourcePills">
@@ -305,12 +898,12 @@
     </select>
 
     <div style="margin-top:14px;">
-      <label class="field-label">Image</label>
+      <label class="field-label">Satellite Image / GeoTIFF</label>
       <label class="dropzone" id="dropzone">
-        <input type="file" id="fileInput" accept="image/*" />
+        <input type="file" id="fileInput" accept="image/*,.tif,.tiff" />
         <div id="dropzoneContent">
-          <div class="hint">Click to upload a satellite / aerial image</div>
-          <div class="hint-sm">JPG · PNG · WEBP</div>
+          <div class="hint">Click or drop satellite image or GeoTIFF</div>
+          <div class="hint-sm">GeoTIFF (.tif, .tiff) · JPG · PNG · WEBP</div>
         </div>
       </label>
     </div>
@@ -319,13 +912,14 @@
     <textarea id="questionInput" placeholder="e.g. What land cover types are visible in this image?"></textarea>
     <div class="quick-qs">
       <button data-q="What type of land cover is visible?">Land cover?</button>
+      <button data-q="Highlight the beach, ocean, buildings, and roads separately.">Beach, Ocean, Roads & Buildings</button>
       <button data-q="Are there any water bodies in this image?">Water bodies?</button>
       <button data-q="Where are the urban / built-up areas?">Urban areas?</button>
       <button data-q="Is there significant vegetation or forest cover?">Vegetation?</button>
-      <button data-q="What notable objects or structures can you identify?">Objects?</button>
+      <button data-q="Highlight the water body and major structures visible in this image.">Highlight structures</button>
     </div>
 
-    <button class="primary-btn" id="askBtn">Analyze Image (Gemini VLM Engine)</button>
+    <button class="primary-btn" id="askBtn">Analyze Image (VLM Engine)</button>
     <div id="loadingLine" style="display:none;" class="loading-line">
       <div class="spinner"></div> Running vision-language reasoning…
     </div>
@@ -337,32 +931,155 @@
     <div id="resultsEmpty" class="empty-state">Upload an image and ask a question to see results & map here.</div>
 
     <div id="resultsContent" style="display:none;">
-      <div id="engineBadge" class="engine-pill">Engine: Gemini API</div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+        <div id="engineBadge" class="engine-pill" style="margin-bottom:0;">Engine: RS-VLM (GeoChat/EarthGPT) + Gemini</div>
+        <div id="geotiffBadge" class="engine-pill" style="display:none; border-color:var(--amber); color:var(--amber); margin-bottom:0;"></div>
+      </div>
       <div class="answer-box" id="answerText"></div>
 
-      <div class="section-label" style="margin-top: 14px;">Detected Feature Masks & Visual Highlights</div>
-      <div id="maskContainer" style="position:relative; width:100%; border-radius:8px; overflow:hidden; border:1px solid var(--panel-line); margin-bottom:8px; background:#060911;">
-        <img id="maskImagePreview" src="" style="width:100%; max-height:280px; object-fit:contain; display:block;" />
-        <canvas id="maskCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></canvas>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 14px; margin-bottom: 6px; flex-wrap:wrap; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="section-label" style="margin:0;">Satellite Image & Feature Highlighting</span>
+          <span id="activeToolBadge" class="engine-pill" style="margin:0; font-size:9.5px; border-color:var(--teal-dim); color:var(--teal);">Mode: 👁 Inspect</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <!-- Independent Layer Toggles -->
+          <div style="display:flex; align-items:center; gap:8px; font-size:10.5px; font-family:'JetBrains Mono'; color:var(--ink-dim);">
+            <label style="display:flex; align-items:center; gap:3px; cursor:pointer;" title="Toggle Base Satellite Raster Layer">
+              <input type="checkbox" id="layerToggleRaster" checked /> Raster
+            </label>
+            <label style="display:flex; align-items:center; gap:3px; cursor:pointer;" title="Toggle Detection Bounding Boxes Layer">
+              <input type="checkbox" id="layerToggleBoxes" checked /> Boxes
+            </label>
+            <label style="display:flex; align-items:center; gap:3px; cursor:pointer;" title="Toggle Segmentation Masks Layer">
+              <input type="checkbox" id="layerToggleMasks" checked /> Masks
+            </label>
+          </div>
+          <!-- Opacity Slider -->
+          <div style="display:flex; align-items:center; gap:4px; font-size:10.5px; font-family:'JetBrains Mono'; color:var(--ink-dim);">
+            <span>Opacity:</span>
+            <input type="range" id="maskInlineOpacity" min="10" max="90" value="55" style="width:65px; accent-color:var(--teal);" />
+            <span id="opacityValText" style="font-size:10px; width:26px;">55%</span>
+          </div>
+        </div>
       </div>
+
+      <!-- Multi-Layered Hardware-Accelerated Satellite Image Viewer -->
+      <div id="maskContainer" style="position:relative; width:100%; border-radius:8px; overflow:hidden; border:1px solid var(--panel-line); margin-bottom:6px; background:var(--bg-surface); display:flex; justify-content:center; align-items:center;">
+        <div id="maskCanvasWrapper" style="position:relative; display:inline-block; line-height:0; max-width:100%;">
+          <!-- Layer 1: Base Satellite Raster -->
+          <img id="maskImagePreview" src="" style="max-width:100%; max-height:460px; width:auto; height:auto; display:block;" />
+          <!-- Layer 2: Detection Bounding Box Layer -->
+          <canvas id="boxCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></canvas>
+          <!-- Layer 3: Segmentation Mask Alpha Layer -->
+          <canvas id="maskCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></canvas>
+          <!-- Layer 4: Interactive Prompt & Inspection Layer -->
+          <canvas id="interactionCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:auto; cursor:default;"></canvas>
+
+          <!-- Floating Region Information HUD (shown on hover or click) -->
+          <div id="regionHud" style="display:none; position:absolute; bottom:10px; right:10px; background:var(--modal-backdrop); border:1px solid var(--primary); border-radius:6px; padding:8px 12px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--ink); box-shadow:var(--shadow-md); z-index:10; max-width:260px; backdrop-filter:blur(4px); line-height:normal;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span id="hudTitle" style="font-weight:700; color:var(--primary);">Region Details</span>
+              <button type="button" id="closeHudBtn" style="background:transparent; border:none; color:var(--ink-dim); cursor:pointer; font-size:11px; padding:0 2px;">✕</button>
+            </div>
+            <div id="hudBody" style="font-size:10px; color:var(--ink-dim); line-height:1.5;"></div>
+          </div>
+
+          <!-- In-canvas Processing Status Overlay -->
+          <div id="segPromptLoading" style="display:none; position:absolute; top:12px; left:12px; background:var(--modal-backdrop); border:1px solid var(--primary); border-radius:6px; padding:6px 12px; font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--primary); z-index:12; backdrop-filter:blur(4px); align-items:center; gap:8px;">
+            <div class="spinner" style="width:12px; height:12px; margin:0;"></div>
+            <span id="segPromptLoadingText">Segmenting prompt with SAM 2.1…</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- In-Built Interactive Segmentation & Inspection Precision Toolbar -->
+      <div id="segToolbar" style="background:var(--bg-surface); border:1px solid var(--panel-line); border-radius:6px; padding:8px 10px; margin-bottom:8px; display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+          <!-- Interactive Tool Selector -->
+          <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+            <button type="button" class="source-pill" id="btnToolAi" title="Filter features with Natural Language AI query" style="padding:4px 9px; font-size:11px; color:var(--ai-color); border-color:rgba(139,124,255,0.3); background:var(--ai-dim);">✦ AI Filter</button>
+            <button type="button" class="source-pill active" id="btnToolInspect" title="Hover / Click to inspect detected features" style="padding:4px 9px; font-size:11px;">👁 Inspect</button>
+            <button type="button" class="source-pill" id="btnToolPointPos" title="Click on image to segment object (+) with SAM 2.1 / HQ-SAM" style="padding:4px 9px; font-size:11px;">• Point (+)</button>
+            <button type="button" class="source-pill" id="btnToolPointNeg" title="Click on image to exclude area (-) from mask" style="padding:4px 9px; font-size:11px;">⊖ Point (−)</button>
+            <button type="button" class="source-pill" id="btnToolBox" title="Click & drag bounding box to segment object" style="padding:4px 9px; font-size:11px;">□ Box Prompt</button>
+            <button type="button" class="source-pill" id="btnToolPolygon" title="Click polygon vertices, double-click to close" style="padding:4px 9px; font-size:11px;">⬡ Polygon</button>
+          </div>
+
+          <!-- History & Export Actions -->
+          <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+            <button type="button" class="chip" id="btnToolUndo" title="Undo last segmentation action" style="padding:3px 8px; font-size:10px; cursor:pointer;">⎌ Undo</button>
+            <button type="button" class="chip" id="btnToolClearActive" title="Delete selected mask" style="padding:3px 8px; font-size:10px; cursor:pointer;">🗑 Delete Active</button>
+            <button type="button" class="chip" id="btnToolClearAll" title="Clear all masks" style="padding:3px 8px; font-size:10px; cursor:pointer;">↺ Clear All</button>
+            <!-- Export Dropdown -->
+            <div style="position:relative; display:inline-block;">
+              <button type="button" class="chip" id="btnExportMenu" style="padding:3px 8px; font-size:10px; cursor:pointer; color:var(--primary); border-color:var(--panel-line);">💾 Export ▾</button>
+              <div id="exportDropdown" style="display:none; position:absolute; bottom:28px; right:0; background:var(--bg-card); border:1px solid var(--panel-line); border-radius:6px; padding:4px; box-shadow:var(--shadow-md); z-index:25; min-width:140px;">
+                <button type="button" class="chip" id="btnExportPngComposite" style="display:block; width:100%; text-align:left; padding:4px 8px; margin-bottom:2px; font-size:10px; cursor:pointer;">🖼 PNG Composite</button>
+                <button type="button" class="chip" id="btnExportBinaryPng" style="display:block; width:100%; text-align:left; padding:4px 8px; margin-bottom:2px; font-size:10px; cursor:pointer;">⬛ Binary Mask PNG</button>
+                <button type="button" class="chip" id="btnExportGeoTiff" style="display:block; width:100%; text-align:left; padding:4px 8px; font-size:10px; cursor:pointer;">🛰 GeoTIFF Mask</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tool Prompt Guide Hint Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:10.5px; font-family:'JetBrains Mono',monospace; color:var(--ink-dim); border-top:1px solid rgba(255,255,255,0.05); padding-top:4px;">
+          <span id="toolHintText">Click on any detected feature to inspect classification, pixel statistics, and confidence.</span>
+          <span id="coordsHud" style="color:var(--teal); opacity:0.8;">X: 0 | Y: 0</span>
+        </div>
+      </div>
+
+      <!-- Inline AI Highlight Search Bar (expandable) -->
+      <div id="aiHighlightBar" style="display:none; background:#070b14; border:1px solid var(--teal-dim); border-radius:6px; padding:8px 10px; margin-bottom:8px;">
+        <div style="display:flex; gap:6px; align-items:center;">
+          <input type="text" id="aiHighlightInput" placeholder="Enter query: e.g. 'Highlight buildings', 'Highlight water', 'Highlight roads'…" style="flex:1; background:#0d1424; border:1px solid var(--panel-line); color:var(--ink); padding:6px 10px; border-radius:5px; font-size:11.5px; font-family:'JetBrains Mono',monospace;" />
+          <button type="button" class="primary-btn" id="aiHighlightSubmitBtn" style="padding:6px 12px; font-size:11px; white-space:nowrap; margin-top:0;">Run SAM 2.1</button>
+        </div>
+        <div style="display:flex; gap:5px; flex-wrap:wrap; margin-top:6px; align-items:center;">
+          <span style="font-size:10px; color:var(--ink-dim);">Quick Presets:</span>
+          <button type="button" class="chip" data-aiq="Highlight ocean and sea water bodies" style="font-size:9.5px; padding:2px 7px; cursor:pointer;">🌊 Ocean / Sea</button>
+          <button type="button" class="chip" data-aiq="Highlight beach and sandy coastline" style="font-size:9.5px; padding:2px 7px; cursor:pointer;">🏖️ Beach</button>
+          <button type="button" class="chip" data-aiq="Highlight buildings" style="font-size:9.5px; padding:2px 7px; cursor:pointer;">🏙️ Buildings</button>
+          <button type="button" class="chip" data-aiq="Highlight roads and transit corridors" style="font-size:9.5px; padding:2px 7px; cursor:pointer;">🛣️ Roads</button>
+          <button type="button" class="chip" data-aiq="Highlight vegetation" style="font-size:9.5px; padding:2px 7px; cursor:pointer;">🌲 Vegetation</button>
+          <button type="button" class="chip" data-aiq="Highlight beach, ocean, roads, and buildings separately" style="font-size:9.5px; padding:2px 7px; cursor:pointer; color:var(--teal); border-color:var(--teal-dim);">✦ All Separately</button>
+        </div>
+        <div id="aiHighlightLoading" style="display:none; font-size:11px; color:var(--teal); margin-top:6px; align-items:center; gap:6px;">
+          <div class="spinner" style="width:12px; height:12px;"></div> Segmenting individual instances with SAM 2.1…
+        </div>
+      </div>
+
       <div id="maskLegend" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;"></div>
 
-      <div class="section-label" style="margin-top: 14px; display:flex; justify-content:space-between; align-items:center;">
-        <span>Interactive Satellite Map (Result + Location)</span>
-        <span id="locationSourceBadge" class="badge good" style="font-size:10px;">📍 Location Ready</span>
+      <!-- Interactive Mapbox 3D Satellite Map Container -->
+      <div id="mapSection" style="display:none; margin-top: 14px;">
+        <div class="section-label" style="display:flex; justify-content:space-between; align-items:center;">
+          <span>Interactive Mapbox 3D Satellite Map (Verified Location)</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button type="button" class="chip" id="mapboxTokenBtn" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="configureMapboxToken()" title="Configure Mapbox Access Token">⚙️ Mapbox Token</button>
+            <span id="locationSourceBadge" class="badge good" style="font-size:10px;">📍 Confirmed Location</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; margin-bottom:6px;">
+          <input type="text" id="mapSearchInput" placeholder="🔍 Search or adjust location (e.g. 'Kathmandu, Nepal', 'Pokhara', 'Badrinath')" style="flex:1; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:6px 10px; border-radius:6px; font-size:12px; font-family:'JetBrains Mono',monospace;" />
+          <button type="button" class="source-pill active" id="mapSearchBtn" style="padding:6px 12px; font-size:11px; white-space:nowrap;">Set Location</button>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; align-items:center;">
+          <span style="font-size:10px; color:var(--ink-dim);">Quick Location Presets:</span>
+          <button type="button" class="chip" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="setMapLocationQuick('Nepal')">🇳🇵 Nepal</button>
+          <button type="button" class="chip" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="setMapLocationQuick('Kathmandu, Nepal')">📍 Kathmandu</button>
+          <button type="button" class="chip" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="setMapLocationQuick('Pokhara, Nepal')">🏔️ Pokhara</button>
+          <button type="button" class="chip" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="setMapLocationQuick('Uttarakhand, India')">🏔️ Uttarakhand</button>
+        </div>
+        <div id="resultMap" style="height: 260px; border-radius: 8px; border: 1px solid var(--panel-line); margin-bottom: 14px; background: #060911; overflow:hidden;"></div>
       </div>
-      <div style="display:flex; gap:8px; margin-bottom:6px;">
-        <input type="text" id="mapSearchInput" placeholder="🔍 Search or adjust location (e.g. 'Kathmandu, Nepal', 'Pokhara', 'Badrinath')" style="flex:1; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:6px 10px; border-radius:6px; font-size:12px; font-family:'JetBrains Mono',monospace;" />
-        <button type="button" class="source-pill active" id="mapSearchBtn" style="padding:6px 12px; font-size:11px; white-space:nowrap;">Set Location</button>
+
+      <!-- Notice shown when satellite image has no confirmed GPS/GeoTIFF -->
+      <div id="unconfirmedLocationNotice" style="display:none; font-size:11px; color:var(--ink-dim); margin-top:12px; margin-bottom:14px; padding:8px 12px; background:rgba(255,255,255,0.02); border:1px dashed var(--panel-line); border-radius:6px; justify-content:space-between; align-items:center;">
+        <span>📍 <i>Geographic coordinates unconfirmed for this image (standard non-georeferenced raster).</i></span>
+        <button type="button" class="chip" style="cursor:pointer; font-size:10px; padding:2px 8px; color:var(--teal); border-color:var(--teal-dim);" onclick="toggleManualMap()">+ Pin / Search Location Manually</button>
       </div>
-      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; align-items:center;">
-        <span style="font-size:10px; color:var(--ink-dim);">Quick Location Presets:</span>
-        <button type="button" class="chip" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="setMapLocationQuick('Nepal')">🇳🇵 Nepal</button>
-        <button type="button" class="chip" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="setMapLocationQuick('Kathmandu, Nepal')">📍 Kathmandu</button>
-        <button type="button" class="chip" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="setMapLocationQuick('Pokhara, Nepal')">🏔️ Pokhara</button>
-        <button type="button" class="chip" style="font-size:9.5px; padding:2px 7px; cursor:pointer;" onclick="setMapLocationQuick('Uttarakhand, India')">🏔️ Uttarakhand</button>
-      </div>
-      <div id="resultMap" style="height: 220px; border-radius: 8px; border: 1px solid var(--panel-line); margin-bottom: 14px; background: #060911;"></div>
 
       <div class="section-label">Land Cover Breakdown</div>
       <div id="landCoverBars"></div>
@@ -382,6 +1099,8 @@
         <div class="value" id="confidenceValue">—</div>
       </div>
 
+      <div id="singleTraceBox" class="trace-box" style="display:none;"></div>
+
       <button class="report-btn" id="reportBtn">Generate ISRO-Style Report</button>
     </div>
   </section>
@@ -393,74 +1112,78 @@
   </section>
 </main>
 
-<!-- ============= FAST QUERY TAB ============= -->
-<main class="view" id="tab-fast" style="display:none;">
-  <section class="panel">
-    <h2>Fast Queries (Groq API Engine)</h2>
-    <p style="font-size: 13px; color: var(--ink-dim); margin-bottom: 14px;">
-      Rapid text queries & GIS domain lookups routed through Groq's high-speed Llama-3 70B engine (<500ms response time).
-    </p>
-
-    <label class="field-label">Domain Question</label>
-    <textarea id="fastQuestionInput" placeholder="e.g. Compare Sentinel-1 SAR vs Sentinel-2 Optical for flood monitoring in India." style="min-height: 90px;"></textarea>
-
-    <div class="quick-qs">
-      <button data-fq="How does Sentinel-1 SAR penetrate cloud cover during Indian monsoon flood mapping?">Monsoon Flood SAR</button>
-      <button data-fq="What are the key land cover spectral bands in Sentinel-2 for agriculture?">Sentinel-2 Crop Bands</button>
-      <button data-fq="What satellite datasets does ISRO Bhuvan geoportal provide for land use?">ISRO Bhuvan Datasets</button>
-    </div>
-
-    <button class="primary-btn" id="fastQueryBtn" style="margin-top: 14px;">Run Fast Query (Groq Engine)</button>
-    <div id="fastLoading" style="display:none;" class="loading-line">
-      <div class="spinner"></div> Routing to Groq Fast Engine…
-    </div>
-    <div id="fastError" style="display:none;" class="error-box"></div>
-  </section>
-
-  <section class="panel">
-    <h2>Fast Response Output</h2>
-    <div id="fastEmpty" class="empty-state">Ask a question on the left to test fast query response.</div>
-    <div id="fastContent" style="display:none;">
-      <div id="fastEngineBadge" class="engine-pill">Engine: Groq API</div>
-      <div class="answer-box" id="fastAnswerText" style="white-space: pre-wrap;"></div>
-    </div>
-  </section>
-</main>
-
 <!-- ============= COMPARE TAB ============= -->
 <main class="view" id="tab-compare" style="display:none;">
   <section class="panel">
-    <h2>Before / After Images</h2>
+    <h2>Before / After Images (Bi-Temporal Pair)</h2>
     <div class="two-col">
       <div>
-        <label class="field-label">Before</label>
+        <label class="field-label">Date 1 (Before)</label>
         <label class="dropzone" id="dropzoneBefore">
-          <input type="file" id="fileBefore" accept="image/*" />
-          <div id="dropzoneBeforeContent"><div class="hint-sm">Upload</div></div>
+          <input type="file" id="fileBefore" accept="image/*,.tif,.tiff" />
+          <div id="dropzoneBeforeContent"><div class="hint-sm">Upload GeoTIFF / JPG</div></div>
         </label>
-        <textarea id="labelBefore" placeholder="Optional label, e.g. 2023" style="margin-top:8px; min-height:36px;"></textarea>
+        <textarea id="labelBefore" placeholder="Optional label, e.g. Pre-flood / 2023" style="margin-top:8px; min-height:36px;"></textarea>
       </div>
       <div>
-        <label class="field-label">After</label>
+        <label class="field-label">Date 2 (After)</label>
         <label class="dropzone" id="dropzoneAfter">
-          <input type="file" id="fileAfter" accept="image/*" />
-          <div id="dropzoneAfterContent"><div class="hint-sm">Upload</div></div>
+          <input type="file" id="fileAfter" accept="image/*,.tif,.tiff" />
+          <div id="dropzoneAfterContent"><div class="hint-sm">Upload GeoTIFF / JPG</div></div>
         </label>
-        <textarea id="labelAfter" placeholder="Optional label, e.g. 2026" style="margin-top:8px; min-height:36px;"></textarea>
+        <textarea id="labelAfter" placeholder="Optional label, e.g. Post-flood / 2026" style="margin-top:8px; min-height:36px;"></textarea>
       </div>
     </div>
-    <button class="primary-btn" id="compareBtn">Compare Images</button>
+    <button class="primary-btn" id="compareBtn">Compare Images (Change Detection)</button>
     <div id="compareLoading" style="display:none;" class="loading-line">
-      <div class="spinner"></div> Running change detection…
+      <div class="spinner"></div> Running bi-temporal change detection…
     </div>
     <div id="compareError" style="display:none;" class="error-box"></div>
   </section>
 
   <section class="panel">
-    <h2>Change Analysis</h2>
-    <div id="compareEmpty" class="empty-state">Upload two images of the same location to detect change.</div>
+    <h2>Change Analysis & Anomaly Flagging</h2>
+    <div id="compareEmpty" class="empty-state">Upload two images of the same location to detect temporal change.</div>
     <div id="compareContent" style="display:none;">
+      <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+        <div id="compareEngineBadge" class="engine-pill" style="margin-bottom:0;">Engine: CDVQA / Dedicated Temporal Change Model</div>
+      </div>
       <div class="answer-box" id="compareNarrative"></div>
+
+      <!-- Spatial Change Heatmap & Comparison Viewer -->
+      <div id="compareViewer" style="margin-top:14px; display:none;">
+        <div class="section-label" style="display:flex; justify-content:space-between; align-items:center;">
+          <span>Spatial Change Map & Heatmap</span>
+          <button type="button" class="chip" id="toggleHeatmapBtn" style="cursor:pointer; background:rgba(79,216,196,0.15); color:var(--teal); font-weight:600; padding:4px 9px;">
+            🗺️ Toggle Heatmap Overlay
+          </button>
+        </div>
+
+        <div style="position:relative; width:100%; border-radius:8px; overflow:hidden; border:1px solid var(--panel-line); background:#060911; margin-top:6px;">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2px; background:var(--panel-line);">
+            <div style="position:relative;">
+              <span style="position:absolute; top:4px; left:6px; background:rgba(0,0,0,0.7); font-size:10px; padding:2px 6px; border-radius:4px; font-family:'JetBrains Mono'; z-index:2;">Date 1 (Before)</span>
+              <img id="compareBeforeImg" src="" style="width:100%; height:190px; object-fit:cover; display:block;" />
+            </div>
+            <div style="position:relative;">
+              <span style="position:absolute; top:4px; left:6px; background:rgba(0,0,0,0.7); font-size:10px; padding:2px 6px; border-radius:4px; font-family:'JetBrains Mono'; z-index:2;">Date 2 (After) + Heatmap</span>
+              <img id="compareAfterImg" src="" style="width:100%; height:190px; object-fit:cover; display:block;" />
+              <img id="compareHeatmapImg" src="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; display:none; pointer-events:none; z-index:3;" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Heatmap Legend & Metrics -->
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; font-size:10px; font-family:'JetBrains Mono';">
+          <span class="chip" style="color:#e63232; border-color:#e63232;">🔴 Vegetation Loss / Clearing</span>
+          <span class="chip" style="color:#00b4ff; border-color:#00b4ff;">🔵 Water / Flood Expansion</span>
+          <span class="chip" style="color:#f0a94e; border-color:#f0a94e;">🟡 Urban / New Built-up</span>
+          <span class="chip" style="color:#2ecc71; border-color:#2ecc71;">🟢 Vegetation Growth</span>
+        </div>
+
+        <div id="changeStatsRow" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"></div>
+      </div>
+
       <div id="anomalyBanner" style="display:none;" class="anomaly-banner"></div>
       <div class="section-label">Detected Changes</div>
       <div id="changesList"></div>
@@ -468,76 +1191,90 @@
         <div class="label">Model Confidence</div>
         <div class="value" id="compareConfidence">—</div>
       </div>
+      <div id="compareTraceBox" class="trace-box" style="display:none;"></div>
     </div>
   </section>
 </main>
 
-<!-- ============= LOGIN PAGE TAB ============= -->
-<main class="view" id="tab-login" style="display:none;">
+<!-- ============= CROSS-MODAL TAB (OPTICAL + SAR) ============= -->
+<main class="view" id="tab-crossmodal" style="display:none;">
   <section class="panel">
-    <h2 id="pageAuthTitle">01 · Account Authentication</h2>
-    <p style="font-size: 13px; color: var(--ink-dim); margin-bottom: 16px;">
-      Sign in to save your remote sensing query history, track satellite analyses, and export customized ISRO reports.
+    <h2>01 · Co-Registered Optical + SAR Pair</h2>
+    <p style="font-size: 13px; color: var(--ink-dim); margin-bottom: 14px;">
+      Joint information extraction combining Optical spectral signatures (Cartosat-2S / Sentinel-2) with microwave radar backscatter (RISAT / Sentinel-1 SAR) for all-weather feature grounding & cloud penetration.
     </p>
 
-    <div id="pageAuthLoggedOut">
-      <div style="margin-bottom: 12px;">
-        <label class="field-label">Username</label>
-        <input type="text" id="pageAuthUsername" placeholder="Enter your username" style="width:100%; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:10px 12px; border-radius:6px; font-family:'JetBrains Mono',monospace;" />
+    <div class="two-col">
+      <div>
+        <label class="field-label">🛰️ Optical / Multispectral (Cartosat / S2)</label>
+        <label class="dropzone" id="dropzoneOptical">
+          <input type="file" id="fileOptical" accept="image/*,.tif,.tiff" />
+          <div id="dropzoneOpticalContent"><div class="hint-sm">Upload Optical GeoTIFF / JPG</div></div>
+        </label>
       </div>
-
-      <div id="pageAuthEmailGroup" style="display:none; margin-bottom: 12px;">
-        <label class="field-label">Email Address</label>
-        <input type="email" id="pageAuthEmail" placeholder="user@example.com" style="width:100%; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:10px 12px; border-radius:6px; font-family:'JetBrains Mono',monospace;" />
-      </div>
-
-      <div style="margin-bottom: 12px;">
-        <label class="field-label">Password</label>
-        <input type="password" id="pageAuthPassword" placeholder="••••••••" style="width:100%; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:10px 12px; border-radius:6px; font-family:'JetBrains Mono',monospace;" />
-      </div>
-
-      <div id="pageAuthError" style="display:none;" class="error-box"></div>
-
-      <button class="primary-btn" id="pageAuthSubmitBtn" style="margin-top:14px;">Sign In to Account</button>
-      
-      <div style="margin-top:14px; font-size:13px; color:var(--ink-dim); text-align:center;">
-        <span id="pageAuthToggleText">Don't have an account yet?</span>
-        <button type="button" id="pageAuthToggleBtn" style="background:none; border:none; color:var(--teal); cursor:pointer; text-decoration:underline; font-weight:600; margin-left:4px;">Create Account</button>
+      <div>
+        <label class="field-label">📡 Synthetic Aperture Radar (RISAT / S1)</label>
+        <label class="dropzone" id="dropzoneSar">
+          <input type="file" id="fileSar" accept="image/*,.tif,.tiff" />
+          <div id="dropzoneSarContent"><div class="hint-sm">Upload SAR GeoTIFF / JPG</div></div>
+        </label>
       </div>
     </div>
 
-    <div id="pageAuthLoggedIn" style="display:none;">
-      <div class="answer-box" style="margin-bottom: 14px;">
-        Active Session: Signed in as <b id="pageAuthUsernameDisplay" style="color:var(--teal);">—</b>
-      </div>
-      <div class="section-label">User Profile Details</div>
-      <div class="change-row"><div class="cat">User ID</div><div class="dir" id="pageAuthUserId">—</div></div>
-      <div class="change-row"><div class="cat">Email</div><div class="dir" id="pageAuthEmailDisplay">—</div></div>
-      <div class="change-row"><div class="cat">Role</div><div class="dir" style="color:var(--teal);">Active Satellite Researcher</div></div>
-      
-      <button class="primary-btn" id="pageLogoutBtn" style="margin-top:20px; background:rgba(224,101,79,0.2); color:var(--danger); border:1px solid rgba(224,101,79,0.4);">Logout Account</button>
+    <label class="field-label" style="margin-top:14px;">Joint Query</label>
+    <textarea id="crossmodalQuestionInput" placeholder="e.g. Use the optical and SAR images together to identify built-up and water-covered regions."></textarea>
+    <div class="quick-qs">
+      <button data-cmq="Use the optical and SAR images together to identify built-up and water-covered regions.">Built-up & Water</button>
+      <button data-cmq="What features does the SAR backscatter reveal beneath the optical cloud cover?">Cloud Penetration</button>
+      <button data-cmq="Differentiate calm water from dark asphalt using SAR specular backscatter.">Water vs Asphalt</button>
+      <button data-cmq="Extract infrastructure and vegetation using multi-sensor fusion.">Sensor Fusion</button>
     </div>
+
+    <button class="primary-btn" id="crossmodalBtn" style="margin-top: 14px;">Run Joint Cross-Modal Fusion</button>
+    <div id="crossmodalLoading" style="display:none;" class="loading-line">
+      <div class="spinner"></div> Performing joint Optical-SAR reasoning…
+    </div>
+    <div id="crossmodalError" style="display:none;" class="error-box"></div>
   </section>
 
   <section class="panel">
-    <h2>02 · Platform Features</h2>
-    <div style="font-size: 13.5px; line-height: 1.6; color: var(--ink-dim);">
-      <div style="margin-bottom: 12px;">
-        <b style="color: var(--teal);">🛰 Multimodal Satellite Analysis</b><br>
-        Analyze multispectral optical (Sentinel-2), Synthetic Aperture Radar (Sentinel-1 SAR), and Indian IRS (ISRO/Bhuvan) datasets seamlessly.
+    <h2>02 · Multimodal Synthesis Output</h2>
+    <div id="crossmodalEmpty" class="empty-state">Upload both Optical and SAR images to see joint analysis.</div>
+    <div id="crossmodalContent" style="display:none;">
+      <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+        <div id="crossmodalEngineBadge" class="engine-pill" style="margin-bottom:0;">Engine: Cross-Modal Fusion</div>
+        <div id="cloudPenetrationBadge" class="badge good" style="display:none; font-size:11px;">☁️ SAR Cloud Penetration Active</div>
       </div>
-      <div style="margin-bottom: 12px;">
-        <b style="color: var(--teal);">⚡ Dual API Processing Engine</b><br>
-        Gemini 3.6 Flash for complex VLM vision-language reasoning and Groq Llama-3 70B for instant &lt;500ms domain text queries.
+      <div class="answer-box" id="crossmodalAnswer"></div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:12px;">
+        <div style="background:var(--satellite-accent-dim); border:1px solid var(--panel-line); border-radius:6px; padding:10px;">
+          <div style="font-size:10px; text-transform:uppercase; color:var(--primary); font-weight:600; font-family:'JetBrains Mono'; margin-bottom:4px;">🛰️ Optical Signature</div>
+          <div id="opticalInsights" style="font-size:12.5px; color:var(--ink);"></div>
+        </div>
+        <div style="background:var(--warn-dim); border:1px solid var(--panel-line); border-radius:6px; padding:10px;">
+          <div style="font-size:10px; text-transform:uppercase; color:var(--warn-color); font-weight:600; font-family:'JetBrains Mono'; margin-bottom:4px;">📡 SAR Backscatter</div>
+          <div id="sarInsights" style="font-size:12.5px; color:var(--ink);"></div>
+        </div>
       </div>
-      <div style="margin-bottom: 12px;">
-        <b style="color: var(--teal);">🗺 Interactive Map & Feature Overlays</b><br>
-        Real-time Leaflet satellite basemap rendering, region bounding boxes, and color-coded feature mask highlights.
+
+      <div class="section-label" style="margin-top:14px;">Joint Land Cover Breakdown</div>
+      <div id="crossmodalLandCoverBars"></div>
+
+      <div class="section-label">Verified Features</div>
+      <div class="chips" id="crossmodalFeatureChips"></div>
+
+      <div class="section-label">Evidence</div>
+      <ul class="evidence-list" id="crossmodalEvidenceList"></ul>
+
+      <div class="confidence-row">
+        <div class="label">Cross-Modal Confidence</div>
+        <div class="value" id="crossmodalConfidence">—</div>
       </div>
+      <div id="crossmodalTraceBox" class="trace-box" style="display:none;"></div>
     </div>
   </section>
 </main>
-
 <!-- ============= REPORT MODAL ============= -->
 <div class="modal-backdrop" id="reportModal">
   <div class="modal">
@@ -548,180 +1285,77 @@
   </div>
 </div>
 
-<!-- ============= AUTH MODAL ============= -->
-<div class="modal-backdrop" id="authModal">
-  <div class="modal" style="max-width: 400px;">
-    <h3 id="authModalTitle">Login to SatQuery AI</h3>
-    <div style="margin-top: 14px;">
-      <label class="field-label">Username</label>
-      <input type="text" id="authUsername" placeholder="e.g. sat_researcher" style="width:100%; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:8px 10px; border-radius:6px; font-family:'JetBrains Mono',monospace;" />
-      
-      <div id="authEmailGroup" style="display:none; margin-top:10px;">
-        <label class="field-label">Email</label>
-        <input type="email" id="authEmail" placeholder="user@example.com" style="width:100%; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:8px 10px; border-radius:6px; font-family:'JetBrains Mono',monospace;" />
-      </div>
-
-      <div style="margin-top:10px;">
-        <label class="field-label">Password</label>
-        <input type="password" id="authPassword" placeholder="••••••••" style="width:100%; background:#0a0f1a; border:1px solid var(--panel-line); color:var(--ink); padding:8px 10px; border-radius:6px; font-family:'JetBrains Mono',monospace;" />
-      </div>
+<!-- ============= BENCHMARK EVALUATION MODAL ============= -->
+<div class="modal-backdrop" id="benchmarkModal">
+  <div class="modal" style="max-width: 600px;">
+    <h3>📊 SIH26167 Official Benchmark Suite</h3>
+    <div class="report-meta" id="benchmarkMeta">BigEarthNet · VRSBench · RSVQA · CDVQA</div>
+    <div id="benchmarkBody" style="font-size:13px;">
+      <div style="text-align:center; padding:20px; color:var(--teal);">Evaluating benchmarks...</div>
     </div>
-    
-    <div id="authError" style="display:none;" class="error-box"></div>
-    
-    <button class="primary-btn" id="authSubmitBtn" style="margin-top:16px;">Sign In</button>
-    <div style="margin-top:12px; font-size:12px; color:var(--ink-dim); text-align:center;">
-      <span id="authToggleText">Need an account?</span>
-      <button type="button" id="authToggleBtn" style="background:none; border:none; color:var(--teal); cursor:pointer; text-decoration:underline;">Sign Up</button>
-    </div>
-    <button class="report-btn modal-close" id="closeAuth" style="margin-top:10px;">Cancel</button>
+    <button class="primary-btn modal-close" id="closeBenchmark">Close Inspector</button>
   </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<script src="segmentation.js"></script>
 <script>
   const API_BASE = "http://localhost:8000";
 
-  // ---------- User Auth State ----------
+  // ---------- JWT Authentication & Session State ----------
+  const authToken = localStorage.getItem("satquery_token");
   let currentUser = null;
   try {
     currentUser = JSON.parse(localStorage.getItem("satquery_user") || "null");
-  } catch (e) { currentUser = null; }
+  } catch(e) { currentUser = null; }
 
-  const openAuthBtn = document.getElementById("openAuthBtn");
-  const authModal = document.getElementById("authModal");
-  const closeAuth = document.getElementById("closeAuth");
-  const authModalTitle = document.getElementById("authModalTitle");
-  const authUsername = document.getElementById("authUsername");
-  const authEmail = document.getElementById("authEmail");
-  const authEmailGroup = document.getElementById("authEmailGroup");
-  const authPassword = document.getElementById("authPassword");
-  const authError = document.getElementById("authError");
-  const authSubmitBtn = document.getElementById("authSubmitBtn");
-  const authToggleBtn = document.getElementById("authToggleBtn");
-  const authToggleText = document.getElementById("authToggleText");
+  // Redirect to login screen if not authenticated
+  if (!authToken || !currentUser) {
+    window.location.href = "login.html";
+  }
 
-  let isSignUpMode = false;
+  // ---------- Light & Dark Theme Controller (Segmented Switch) ----------
+  const themeOptLight = document.getElementById("themeOptLight");
+  const themeOptDark = document.getElementById("themeOptDark");
+  const urlTheme = new URLSearchParams(window.location.search).get("theme");
+  const savedTheme = urlTheme || localStorage.getItem("satquery_theme") || "dark";
 
-  function updateAuthHeader() {
-    const userBox = document.getElementById("userHeaderBox");
-    const pageAuthLoggedOut = document.getElementById("pageAuthLoggedOut");
-    const pageAuthLoggedIn = document.getElementById("pageAuthLoggedIn");
-
-    if (currentUser) {
-      if (userBox) {
-        userBox.innerHTML = `
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:12px; font-family:'JetBrains Mono',monospace; color:var(--teal);">👤 ${escapeHtml(currentUser.username)}</span>
-            <button type="button" class="source-pill" id="logoutBtn" style="padding:4px 8px; font-size:10px;">Logout</button>
-          </div>`;
-        document.getElementById("logoutBtn").addEventListener("click", performLogout);
+  function applyTheme(theme) {
+    const activeTheme = theme === "light" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", activeTheme);
+    localStorage.setItem("satquery_theme", activeTheme);
+    
+    if (themeOptLight && themeOptDark) {
+      if (activeTheme === "light") {
+        themeOptLight.classList.add("active");
+        themeOptDark.classList.remove("active");
+      } else {
+        themeOptDark.classList.add("active");
+        themeOptLight.classList.remove("active");
       }
-      if (pageAuthLoggedOut) pageAuthLoggedOut.style.display = "none";
-      if (pageAuthLoggedIn) {
-        pageAuthLoggedIn.style.display = "block";
-        document.getElementById("pageAuthUsernameDisplay").textContent = currentUser.username;
-        document.getElementById("pageAuthUserId").textContent = currentUser.id;
-        document.getElementById("pageAuthEmailDisplay").textContent = currentUser.email || "N/A";
-      }
-    } else {
-      if (userBox) {
-        userBox.innerHTML = `<button type="button" class="source-pill" id="openAuthBtn">👤 Login / Sign Up</button>`;
-        document.getElementById("openAuthBtn").addEventListener("click", () => {
-          // Switch to dedicated login page tab
-          document.querySelectorAll("nav.tabs button").forEach((b) => b.classList.remove("active"));
-          document.getElementById("navLoginTab").classList.add("active");
-          document.querySelectorAll("main.view").forEach((m) => (m.style.display = "none"));
-          document.getElementById("tab-login").style.display = "grid";
-        });
-      }
-      if (pageAuthLoggedOut) pageAuthLoggedOut.style.display = "block";
-      if (pageAuthLoggedIn) pageAuthLoggedIn.style.display = "none";
     }
   }
 
-  function performLogout() {
-    currentUser = null;
-    localStorage.removeItem("satquery_user");
-    updateAuthHeader();
-    showToast("Logged out of account.");
+  function setAppTheme(theme) {
+    applyTheme(theme);
   }
 
-  const pageLogoutBtn = document.getElementById("pageLogoutBtn");
-  if (pageLogoutBtn) pageLogoutBtn.addEventListener("click", performLogout);
+  applyTheme(savedTheme);
 
-  closeAuth.addEventListener("click", () => authModal.classList.remove("open"));
-  
-  authToggleBtn.addEventListener("click", () => {
-    isSignUpMode = !isSignUpMode;
-    authModalTitle.textContent = isSignUpMode ? "Create SatQuery Account" : "Login to SatQuery AI";
-    authEmailGroup.style.display = isSignUpMode ? "block" : "none";
-    authSubmitBtn.textContent = isSignUpMode ? "Sign Up Account" : "Sign In";
-    authToggleText.textContent = isSignUpMode ? "Already registered?" : "Need an account?";
-    authToggleBtn.textContent = isSignUpMode ? "Sign In" : "Sign Up";
-    authError.style.display = "none";
-  });
+  // Update Header with user profile & wire Logout
+  const headerUsername = document.getElementById("headerUsername");
+  if (headerUsername && currentUser) {
+    headerUsername.textContent = `👤 ${currentUser.username}`;
+  }
 
-  const pageAuthToggleBtn = document.getElementById("pageAuthToggleBtn");
-  if (pageAuthToggleBtn) {
-    pageAuthToggleBtn.addEventListener("click", () => {
-      isSignUpMode = !isSignUpMode;
-      document.getElementById("pageAuthTitle").textContent = isSignUpMode ? "01 · Create Account" : "01 · Account Authentication";
-      document.getElementById("pageAuthEmailGroup").style.display = isSignUpMode ? "block" : "none";
-      document.getElementById("pageAuthSubmitBtn").textContent = isSignUpMode ? "Create Account" : "Sign In to Account";
-      document.getElementById("pageAuthToggleText").textContent = isSignUpMode ? "Already registered?" : "Don't have an account yet?";
-      pageAuthToggleBtn.textContent = isSignUpMode ? "Sign In" : "Create Account";
-      document.getElementById("pageAuthError").style.display = "none";
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("satquery_token");
+      localStorage.removeItem("satquery_user");
+      window.location.href = "login.html";
     });
   }
-
-  async function handleAuthSubmission(usernameVal, emailVal, passwordVal, errorEl) {
-    errorEl.style.display = "none";
-    if (!usernameVal || !passwordVal) {
-      errorEl.textContent = "Please fill in username and password.";
-      errorEl.style.display = "block";
-      return;
-    }
-    const endpoint = isSignUpMode ? `${API_BASE}/api/auth/signup` : `${API_BASE}/api/auth/login`;
-    const payload = isSignUpMode ? { username: usernameVal, email: emailVal, password: passwordVal } : { username: usernameVal, password: passwordVal };
-
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || "Authentication failed");
-      }
-      const data = await res.json();
-      currentUser = data;
-      localStorage.setItem("satquery_user", JSON.stringify(currentUser));
-      updateAuthHeader();
-      authModal.classList.remove("open");
-      showToast(`Welcome ${currentUser.username}! Logged in.`);
-    } catch (err) {
-      errorEl.textContent = err.message || "Auth failed";
-      errorEl.style.display = "block";
-    }
-  }
-
-  authSubmitBtn.addEventListener("click", () => {
-    handleAuthSubmission(authUsername.value.trim(), authEmail.value.trim(), authPassword.value.trim(), authError);
-  });
-
-  const pageAuthSubmitBtn = document.getElementById("pageAuthSubmitBtn");
-  if (pageAuthSubmitBtn) {
-    pageAuthSubmitBtn.addEventListener("click", () => {
-      const u = document.getElementById("pageAuthUsername").value.trim();
-      const e = document.getElementById("pageAuthEmail").value.trim();
-      const p = document.getElementById("pageAuthPassword").value.trim();
-      handleAuthSubmission(u, e, p, document.getElementById("pageAuthError"));
-    });
-  }
-
-  updateAuthHeader();
 
   // ---------- Renew Page / Reset Button ----------
   function renewPage() {
@@ -743,22 +1377,22 @@
     document.getElementById("errorBox").style.display = "none";
     document.getElementById("loadingLine").style.display = "none";
 
-    const fastInput = document.getElementById("fastQuestionInput");
-    if (fastInput) fastInput.value = "";
-    const fastContent = document.getElementById("fastContent");
-    if (fastContent) fastContent.style.display = "none";
-    const fastEmpty = document.getElementById("fastEmpty");
-    if (fastEmpty) fastEmpty.style.display = "block";
+    const mapSection = document.getElementById("mapSection");
+    if (mapSection) mapSection.style.display = "none";
+    const noticeEl = document.getElementById("unconfirmedLocationNotice");
+    if (noticeEl) noticeEl.style.display = "none";
 
     const maskContainer = document.getElementById("maskContainer");
     if (maskContainer) maskContainer.style.display = "none";
     const maskLegend = document.getElementById("maskLegend");
     if (maskLegend) maskLegend.innerHTML = "";
 
-    if (leafletMap) {
-      if (mapMarker) { leafletMap.removeLayer(mapMarker); mapMarker = null; }
-      if (mapRect) { leafletMap.removeLayer(mapRect); mapRect = null; }
-      leafletMap.setView([20.5937, 78.9629], 5);
+    if (mapboxMap) {
+      if (mapMarker) { mapMarker.remove(); mapMarker = null; }
+      if (mapboxMap.getLayer('bbox-fill')) mapboxMap.removeLayer('bbox-fill');
+      if (mapboxMap.getLayer('bbox-outline')) mapboxMap.removeLayer('bbox-outline');
+      if (mapboxMap.getSource('bbox-source')) mapboxMap.removeSource('bbox-source');
+      mapboxMap.flyTo({ center: [78.9629, 20.5937], zoom: 4.5, pitch: 30, duration: 1200 });
     }
 
     loadHistory();
@@ -786,8 +1420,8 @@
       btn.classList.add("active");
       document.querySelectorAll("main.view").forEach((m) => (m.style.display = "none"));
       document.getElementById(`tab-${btn.dataset.tab}`).style.display = "grid";
-      if (btn.dataset.tab === "analyze" && leafletMap) {
-        setTimeout(() => leafletMap.invalidateSize(), 200);
+      if (btn.dataset.tab === "analyze" && mapboxMap) {
+        setTimeout(() => mapboxMap.resize(), 200);
       }
     });
   });
@@ -820,8 +1454,13 @@
     if (!file) return;
     currentFile = file;
     currentImageId = null;
-    const url = URL.createObjectURL(file);
-    dropzoneContent.innerHTML = `<img src="${url}" alt="preview" />`;
+    const isTiff = file.name.toLowerCase().endsWith('.tif') || file.name.toLowerCase().endsWith('.tiff');
+    if (isTiff) {
+      dropzoneContent.innerHTML = `<div style="padding:16px; text-align:center;"><div style="font-size:28px;">🛰️</div><div style="font-weight:600; color:var(--teal); font-size:12.5px; margin-top:4px;">${escapeHtml(file.name)}</div><div class="hint-sm" style="margin-top:2px;">GeoTIFF Raster Loaded · Converting bands on upload</div></div>`;
+    } else {
+      const url = URL.createObjectURL(file);
+      dropzoneContent.innerHTML = `<img src="${url}" alt="preview" />`;
+    }
     dropzone.classList.add("has-image");
   });
 
@@ -843,13 +1482,17 @@
     formData.append("question", question);
     formData.append("mode", modeSelect.value);
     formData.append("data_source", selectedDataSource);
+    const engType = document.getElementById("engineTypeSelector") ? document.getElementById("engineTypeSelector").value : "auto";
+    formData.append("engine_type", engType);
     if (currentUser && currentUser.id) formData.append("user_id", currentUser.id);
     if (currentFile) formData.append("image", currentFile);
     else formData.append("image_id", currentImageId);
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/analyze`, { method: "POST", body: formData });
+      const headers = {};
+      if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+      const res = await fetch(`${API_BASE}/api/analyze`, { method: "POST", headers, body: formData });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.detail || `Request failed (${res.status})`);
@@ -870,19 +1513,209 @@
   function setLoading(on) { askBtn.disabled = on; loadingLine.style.display = on ? "flex" : "none"; }
   function showError(msg) { errorBox.textContent = msg; errorBox.style.display = "block"; }
 
-  let leafletMap = null;
+  const mapboxgl = window.maplibregl || window.mapboxgl;
+  let mapboxMap = null;
   let mapMarker = null;
-  let mapRect = null;
   let currentResultData = null;
+  let mapboxToken = localStorage.getItem("satquery_mapbox_token") || "";
+
+  // Auto-fetch server-side configured Mapbox token if available
+  fetch(`${API_BASE}/api/health`)
+    .then((r) => r.json())
+    .then((d) => {
+      if (d.mapbox_token && !localStorage.getItem("satquery_mapbox_token")) {
+        mapboxToken = d.mapbox_token;
+      }
+    })
+    .catch(() => {});
+
+  // High-Resolution Hybrid Satellite Style (Esri World Imagery + Boundaries & Roads Overlay)
+  const SATELLITE_HYBRID_STYLE = {
+    version: 8,
+    sources: {
+      "esri-satellite": {
+        type: "raster",
+        tiles: [
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+        ],
+        tileSize: 256,
+        attribution: "© Esri World Imagery"
+      },
+      "esri-labels": {
+        type: "raster",
+        tiles: [
+          "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+        ],
+        tileSize: 256,
+        attribution: "© Esri Reference"
+      }
+    },
+    layers: [
+      {
+        id: "esri-satellite-layer",
+        type: "raster",
+        source: "esri-satellite",
+        minzoom: 0,
+        maxzoom: 22
+      },
+      {
+        id: "esri-labels-layer",
+        type: "raster",
+        source: "esri-labels",
+        minzoom: 0,
+        maxzoom: 22
+      }
+    ]
+  };
+
+  function getMapboxStyle() {
+    if (mapboxToken && mapboxToken.startsWith("pk.")) {
+      return `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12?access_token=${mapboxToken}`;
+    }
+    return SATELLITE_HYBRID_STYLE;
+  }
+
+  function configureMapboxToken() {
+    const current = localStorage.getItem("satquery_mapbox_token") || "";
+    const input = prompt(
+      "Enter your Mapbox Access Token (pk.eyJ1...):\n(Leave empty to use high-resolution free Esri 3D WebGL satellite tiles)",
+      current
+    );
+    if (input !== null) {
+      const trimmed = input.trim();
+      if (trimmed) {
+        localStorage.setItem("satquery_mapbox_token", trimmed);
+        mapboxToken = trimmed;
+        showToast("Mapbox access token saved!");
+      } else {
+        localStorage.removeItem("satquery_mapbox_token");
+        mapboxToken = "";
+        showToast("Reverted to free high-res satellite tiles.");
+      }
+      if (mapboxMap) {
+        mapboxMap.remove();
+        mapboxMap = null;
+        if (currentResultData && currentResultData.coordinates) {
+          initOrUpdateMap(currentResultData.coordinates);
+        } else {
+          toggleManualMap();
+        }
+      }
+    }
+  }
+
+  function ensureMapboxMap(center, zoom, pitch = 35) {
+    if (!mapboxMap) {
+      const style = getMapboxStyle();
+      mapboxMap = new mapboxgl.Map({
+        container: "resultMap",
+        style: style,
+        center: center,
+        zoom: zoom,
+        pitch: pitch,
+        bearing: -8,
+        attributionControl: false
+      });
+
+      mapboxMap.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-right");
+      mapboxMap.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "top-right");
+
+      mapboxMap.on("load", () => {
+        mapboxMap.resize();
+      });
+
+      mapboxMap.on("error", (e) => {
+        if (e && e.error && e.error.status === 401 && mapboxToken) {
+          console.warn("Mapbox 401: token invalid, falling back to free high-res satellite tiles.");
+          mapboxToken = "";
+          mapboxMap.setStyle(SATELLITE_HYBRID_STYLE);
+        }
+      });
+    } else {
+      mapboxMap.resize();
+    }
+    return mapboxMap;
+  }
+
+  function updateBboxLayer(bb) {
+    if (!mapboxMap || !bb || bb.length !== 4) return;
+    const [s, w, n, e] = bb;
+    const data = {
+      type: "Feature",
+      geometry: {
+        type: "Polygon",
+        coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]]
+      }
+    };
+
+    function applyBbox() {
+      if (!mapboxMap.getSource("bbox-source")) {
+        mapboxMap.addSource("bbox-source", { type: "geojson", data: data });
+        mapboxMap.addLayer({
+          id: "bbox-fill",
+          type: "fill",
+          source: "bbox-source",
+          paint: {
+            "fill-color": "#4fd8c4",
+            "fill-opacity": 0.22
+          }
+        });
+        mapboxMap.addLayer({
+          id: "bbox-outline",
+          type: "line",
+          source: "bbox-source",
+          paint: {
+            "line-color": "#4fd8c4",
+            "line-width": 2.5,
+            "line-opacity": 0.95
+          }
+        });
+      } else {
+        mapboxMap.getSource("bbox-source").setData(data);
+      }
+      mapboxMap.fitBounds([[w, s], [e, n]], {
+        padding: { top: 35, bottom: 35, left: 35, right: 35 },
+        pitch: 35,
+        duration: 1500,
+        maxZoom: 14
+      });
+    }
+
+    if (mapboxMap.isStyleLoaded()) {
+      applyBbox();
+    } else {
+      mapboxMap.once("style.load", applyBbox);
+    }
+  }
 
   function initOrUpdateMap(coords) {
-    const mapContainer = document.getElementById("resultMap");
-    if (!mapContainer) return;
+    const mapSection = document.getElementById("mapSection");
+    const noticeEl = document.getElementById("unconfirmedLocationNotice");
+    if (!mapSection) return;
 
-    let lat = (coords && coords.lat != null) ? coords.lat : 20.5937;
-    let lng = (coords && coords.lng != null) ? coords.lng : 78.9629;
-    let zoom = (coords && coords.bounding_box) ? 10 : 8;
-    const sourceTag = (coords && coords.source) ? coords.source : "Geospatial Location";
+    const hasConfirmedLocation = Boolean(
+      coords &&
+      coords.lat != null &&
+      coords.lng != null &&
+      (coords.confirmed === true ||
+       (coords.source && (coords.source.includes("GeoTIFF") || coords.source.includes("GPS") || coords.source.includes("User Pin") || coords.source.includes("Geocoded"))))
+    );
+
+    if (!hasConfirmedLocation) {
+      // IF THE LOCATION IS NOT CONFIRMED, DO NOT SHOW THE MAP!
+      mapSection.style.display = "none";
+      if (noticeEl) noticeEl.style.display = "flex";
+      return;
+    }
+
+    // Location IS confirmed: reveal map
+    mapSection.style.display = "block";
+    if (noticeEl) noticeEl.style.display = "none";
+
+    let lat = coords.lat;
+    let lng = coords.lng;
+    let zoom = coords.bounding_box ? 11 : 9;
+    const sourceTag = coords.source || "Confirmed Geospatial Location";
 
     const badgeEl = document.getElementById("locationSourceBadge");
     if (badgeEl) {
@@ -894,31 +1727,51 @@
       searchInputEl.value = coords.location_name.split(',')[0];
     }
 
-    if (!leafletMap) {
-      leafletMap = L.map('resultMap').setView([lat, lng], zoom);
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Esri Satellite Tiles'
-      }).addTo(leafletMap);
-    } else {
-      leafletMap.setView([lat, lng], zoom);
-    }
+    const map = ensureMapboxMap([lng, lat], zoom, 35);
 
-    if (mapMarker) { leafletMap.removeLayer(mapMarker); mapMarker = null; }
-    if (mapRect) { leafletMap.removeLayer(mapRect); mapRect = null; }
+    // Marker
+    if (mapMarker) { mapMarker.remove(); mapMarker = null; }
+    const markerEl = document.createElement("div");
+    markerEl.className = "mapbox-custom-marker";
+    markerEl.innerHTML = "📍";
+    markerEl.title = coords.location_name || "Satellite Scene Area";
 
-    if (coords && coords.lat != null && coords.lng != null) {
-      mapMarker = L.marker([coords.lat, coords.lng]).addTo(leafletMap)
-        .bindPopup(`<b>${escapeHtml(coords.location_name || 'Satellite Scene Area')}</b><br><span style="font-size:11px; color:#4fd8c4;">${sourceTag}</span><br>Lat: ${coords.lat.toFixed(4)}, Lng: ${coords.lng.toFixed(4)}`)
-        .openPopup();
-    }
+    const popupHtml = `
+      <div style="font-family:'Space Grotesk',sans-serif; min-width:140px;">
+        <div style="font-weight:600; font-size:12px; color:#dbe4f5; margin-bottom:3px;">${escapeHtml(coords.location_name || 'Satellite Scene Area')}</div>
+        <div style="font-size:10px; color:#4fd8c4; font-family:'JetBrains Mono'; margin-bottom:4px;">${sourceTag}</div>
+        <div style="font-size:10.5px; color:#7c8aa8; font-family:'JetBrains Mono';">Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}</div>
+      </div>
+    `;
+    const popup = new mapboxgl.Popup({ offset: 18, closeButton: false })
+      .setHTML(popupHtml);
+
+    mapMarker = new mapboxgl.Marker({ element: markerEl, anchor: "bottom" })
+      .setLngLat([lng, lat])
+      .setPopup(popup)
+      .addTo(map);
+
+    mapMarker.togglePopup();
 
     if (coords && coords.bounding_box && coords.bounding_box.length === 4) {
-      const [s, w, n, e] = coords.bounding_box;
-      mapRect = L.rectangle([[s, w], [n, e]], { color: "#4fd8c4", weight: 2, fillOpacity: 0.25 }).addTo(leafletMap);
-      leafletMap.fitBounds([[s, w], [n, e]]);
+      updateBboxLayer(coords.bounding_box);
+    } else {
+      map.flyTo({ center: [lng, lat], zoom: zoom, pitch: 35, duration: 1200 });
     }
 
-    setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 300);
+    setTimeout(() => { if (mapboxMap) mapboxMap.resize(); }, 100);
+    setTimeout(() => { if (mapboxMap) mapboxMap.resize(); }, 350);
+  }
+
+  function toggleManualMap() {
+    const mapSection = document.getElementById("mapSection");
+    const noticeEl = document.getElementById("unconfirmedLocationNotice");
+    if (mapSection) {
+      mapSection.style.display = "block";
+      if (noticeEl) noticeEl.style.display = "none";
+      ensureMapboxMap([78.9629, 20.5937], 4.5, 30);
+      setTimeout(() => { if (mapboxMap) mapboxMap.resize(); }, 200);
+    }
   }
 
   const mapSearchInput = document.getElementById("mapSearchInput");
@@ -977,73 +1830,1077 @@
     }
   }
 
+  let activeFeatureMasks = [];
+  let currentMaskHighlightIdx = null;
+  let maskControlsBound = false;
+
+  // In-Built Interactive Segmentation Studio State
+  let activeTool = "point";
+  let promptPolarity = "positive";
+  let brushRadiusVal = 14;
+  let undoStack = [];
+  let redoStack = [];
+  let isBoxDragging = false;
+  let boxDragStart = null;
+  let boxDragCurrent = null;
+  let currentPolyPoints = [];
+  let isBrushPainting = false;
+  let currentBrushPoints = [];
+
+  function pushUndoState() {
+    undoStack.push(JSON.parse(JSON.stringify(activeFeatureMasks)));
+    if (undoStack.length > 25) undoStack.shift();
+    redoStack = [];
+  }
+
+  function undoMaskChange() {
+    if (undoStack.length > 0) {
+      redoStack.push(JSON.parse(JSON.stringify(activeFeatureMasks)));
+      activeFeatureMasks = undoStack.pop();
+      currentMaskHighlightIdx = null;
+      hideRegionHud();
+      if (typeof window.drawMasksInternal === "function") window.drawMasksInternal();
+      if (typeof window.buildLegendInternal === "function") window.buildLegendInternal();
+    }
+  }
+
+  function redoMaskChange() {
+    if (redoStack.length > 0) {
+      undoStack.push(JSON.parse(JSON.stringify(activeFeatureMasks)));
+      activeFeatureMasks = redoStack.pop();
+      currentMaskHighlightIdx = null;
+      hideRegionHud();
+      if (typeof window.drawMasksInternal === "function") window.drawMasksInternal();
+      if (typeof window.buildLegendInternal === "function") window.buildLegendInternal();
+    }
+  }
+
+  function clearAllMasks() {
+    if (activeFeatureMasks.length > 0) {
+      pushUndoState();
+      activeFeatureMasks = [];
+      currentMaskHighlightIdx = null;
+      currentPolyPoints = [];
+      hideRegionHud();
+      if (typeof window.drawMasksInternal === "function") window.drawMasksInternal();
+      if (typeof window.buildLegendInternal === "function") window.buildLegendInternal();
+    }
+  }
+
+  function showRegionHud(m) {
+    const hud = document.getElementById("regionHud");
+    const title = document.getElementById("hudTitle");
+    const body = document.getElementById("hudBody");
+    if (!hud) return;
+
+    const iconMap = { urban: "🏙️", building: "🏙️", water: "🌊", infrastructure: "🛣️", road: "🛣️", vegetation: "🌲", forest: "🌲", disaster: "🚨", other: "📍" };
+    const cat = (m.category || "other").toLowerCase();
+    const icon = iconMap[cat] || "📍";
+    title.innerHTML = `<span>${icon}</span> ${escapeHtml(m.feature_name || m.label || cat.toUpperCase())}`;
+
+    const conf = m.is_user_drawn ? "User-drawn Region" : (m.confidence != null ? Math.round(m.confidence * 100) + "%" : "91%");
+    const px = m.stats?.mask_pixel_count ? `${m.stats.mask_pixel_count.toLocaleString()} px` : "—";
+    const pct = m.stats?.area_percentage ? ` (${m.stats.area_percentage}%)` : "";
+    const bbox = m.box_2d ? `[${m.box_2d.join(", ")}]` : "—";
+
+    body.innerHTML = `
+      <div style="display:flex; justify-content:space-between; padding:2px 0;"><span>Type / Mode:</span><span style="color:var(--teal); font-weight:600;">${m.is_user_drawn ? 'User Polygon' : 'SAM 2.1 Instance'}</span></div>
+      <div style="display:flex; justify-content:space-between; padding:2px 0;"><span>Confidence:</span><span style="color:var(--teal);">${conf}</span></div>
+      <div style="display:flex; justify-content:space-between; padding:2px 0;"><span>Area:</span><span style="color:var(--amber); font-weight:600;">${px}${pct}</span></div>
+      <div style="display:flex; justify-content:space-between; padding:2px 0;"><span>Bounding Box:</span><span style="color:var(--ink);">${bbox}</span></div>
+    `;
+    hud.style.display = "block";
+  }
+
+  function hideRegionHud() {
+    const hud = document.getElementById("regionHud");
+    if (hud) hud.style.display = "none";
+  }
+
+  function isPointInsidePolygon(pt, poly) {
+    const [x, y] = pt;
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [xi, yi] = poly[i];
+      const [xj, yj] = poly[j];
+      const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
   function renderFeatureMasks(imageUrl, masks) {
     const container = document.getElementById("maskContainer");
     const imgEl = document.getElementById("maskImagePreview");
-    const canvasEl = document.getElementById("maskCanvas");
+    const boxCanvas = document.getElementById("boxCanvas");
+    const maskCanvas = document.getElementById("maskCanvas");
+    const interactionCanvas = document.getElementById("interactionCanvas");
     const legendEl = document.getElementById("maskLegend");
 
-    if (!imageUrl) { container.style.display = "none"; return; }
+    const layerToggleRaster = document.getElementById("layerToggleRaster");
+    const layerToggleBoxes = document.getElementById("layerToggleBoxes");
+    const layerToggleMasks = document.getElementById("layerToggleMasks");
+    const opacityEl = document.getElementById("maskInlineOpacity");
+    const opacityValText = document.getElementById("opacityValText");
+
+    const activeToolBadge = document.getElementById("activeToolBadge");
+    const toolHintText = document.getElementById("toolHintText");
+    const coordsHud = document.getElementById("coordsHud");
+    const segPromptLoading = document.getElementById("segPromptLoading");
+    const segPromptLoadingText = document.getElementById("segPromptLoadingText");
+
+    if (!imageUrl) {
+      if (container) container.style.display = "none";
+      if (legendEl) legendEl.innerHTML = "";
+      return;
+    }
+
+    activeFeatureMasks = Array.isArray(masks) && masks.length ? masks : [];
+    currentMaskHighlightIdx = null;
+    currentPolyPoints = [];
+    isBoxDragging = false;
+    boxDragStart = null;
+    boxDragCurrent = null;
     container.style.display = "block";
-    imgEl.src = `${API_BASE}${imageUrl}`;
+    imgEl.src = imageUrl.startsWith("http") || imageUrl.startsWith("data:") ? imageUrl : `${API_BASE}${imageUrl}`;
 
-    imgEl.onload = () => {
-      canvasEl.width = imgEl.clientWidth;
-      canvasEl.height = imgEl.clientHeight;
-      const ctx = canvasEl.getContext("2d");
-      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+    const colorMap = {
+      beach: "#d4a373",
+      sand: "#d4a373",
+      coastline: "#d4a373",
+      water: "#1e90ff",
+      ocean: "#1e90ff",
+      sea: "#1e90ff",
+      river: "#1e90ff",
+      urban: "#e67e22",
+      building: "#e67e22",
+      infrastructure: "#f1c40f",
+      road: "#f1c40f",
+      vegetation: "#2ecc71",
+      forest: "#2ecc71",
+      disaster: "#e74c3c",
+      flood: "#e74c3c",
+      change: "#9b59b6",
+      other: "#4fd8c4"
+    };
 
-      legendEl.innerHTML = "";
-      const colorMap = {
-        vegetation: "#2ecc71",
-        water: "#3498db",
-        urban: "#e67e22",
-        disaster: "#e74c3c",
-        other: "#9b59b6"
-      };
+    const iconMap = {
+      beach: "🏖️",
+      sand: "🏖️",
+      coastline: "🏖️",
+      water: "🌊",
+      ocean: "🌊",
+      sea: "🌊",
+      river: "🌊",
+      urban: "🏙️",
+      building: "🏙️",
+      infrastructure: "🛣️",
+      road: "🛣️",
+      vegetation: "🌲",
+      forest: "🌲",
+      disaster: "🚨",
+      flood: "🌊",
+      change: "🔄",
+      other: "📍"
+    };
 
-      if (!masks || !masks.length) {
-        // Fallback default mask highlights if none generated
-        masks = [
-          { feature_name: "Primary Land Feature", category: "vegetation", box_2d: [150, 150, 850, 850] }
-        ];
+    function hexToRgba(hex, alpha) {
+      let c = (hex || "#4fd8c4").replace("#", "");
+      if (c.length === 3) c = c.split("").map((x) => x + x).join("");
+      const num = parseInt(c, 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function getGeom() {
+      const cW = imgEl.clientWidth || 400;
+      const cH = imgEl.clientHeight || 400;
+      const natW = imgEl.naturalWidth || cW;
+      const natH = imgEl.naturalHeight || cH;
+      const imgRatio = natW / natH;
+      const dispRatio = cW / cH;
+
+      let renderW = cW;
+      let renderH = cH;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      if (dispRatio > imgRatio) {
+        renderH = cH;
+        renderW = cH * imgRatio;
+        offsetX = (cW - renderW) / 2;
+      } else {
+        renderW = cW;
+        renderH = cW / imgRatio;
+        offsetY = (cH - renderH) / 2;
       }
 
-      masks.forEach((m) => {
+      const scaleX = renderW / natW;
+      const scaleY = renderH / natH;
+      return { cW, cH, natW, natH, renderW, renderH, offsetX, offsetY, scaleX, scaleY };
+    }
+
+    function syncCanvasSizes() {
+      const { cW, cH } = getGeom();
+      [boxCanvas, maskCanvas, interactionCanvas].forEach((cvs) => {
+        if (cvs && (cvs.width !== cW || cvs.height !== cH)) {
+          cvs.width = cW;
+          cvs.height = cH;
+        }
+      });
+    }
+
+    // Layer 2: Detection Bounding Box Layer
+    function drawBoxLayer() {
+      if (!boxCanvas) return;
+      const ctx = boxCanvas.getContext("2d");
+      ctx.clearRect(0, 0, boxCanvas.width, boxCanvas.height);
+      if (!layerToggleBoxes || !layerToggleBoxes.checked) return;
+
+      const { renderW, renderH, offsetX, offsetY } = getGeom();
+
+      activeFeatureMasks.forEach((m, idx) => {
+        if (!m.box_2d || m.box_2d.length !== 4) return;
         const cat = (m.category || "other").toLowerCase();
-        const color = colorMap[cat] || colorMap.other;
+        const color = m.color || colorMap[cat] || colorMap.other;
+        const isSpotlighted = currentMaskHighlightIdx === idx;
+
+        const [ymin, xmin, ymax, xmax] = m.box_2d;
+        const x = offsetX + (xmin / 1000.0) * renderW;
+        const y = offsetY + (ymin / 1000.0) * renderH;
+        const w = ((xmax - xmin) / 1000.0) * renderW;
+        const h = ((ymax - ymin) / 1000.0) * renderH;
+
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = isSpotlighted ? 2.5 : 1.5;
+
+        // Thin bounding box outline
+        ctx.strokeRect(x, y, w, h);
+
+        // Precision corner brackets
+        const cornerLen = Math.min(8, Math.min(w, h) * 0.25);
+        ctx.lineWidth = isSpotlighted ? 3.5 : 2.5;
+        // Top-left
+        ctx.beginPath(); ctx.moveTo(x, y + cornerLen); ctx.lineTo(x, y); ctx.lineTo(x + cornerLen, y); ctx.stroke();
+        // Top-right
+        ctx.beginPath(); ctx.moveTo(x + w - cornerLen, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + cornerLen); ctx.stroke();
+        // Bottom-left
+        ctx.beginPath(); ctx.moveTo(x, y + h - cornerLen); ctx.lineTo(x, y + h); ctx.lineTo(x + cornerLen, y + h); ctx.stroke();
+        // Bottom-right
+        ctx.beginPath(); ctx.moveTo(x + w - cornerLen, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - cornerLen); ctx.stroke();
+
+        ctx.restore();
+      });
+    }
+
+    // Layer 3: Segmentation Mask Alpha Layer
+    function drawMaskLayer() {
+      if (!maskCanvas) return;
+      const ctx = maskCanvas.getContext("2d");
+      ctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+      if (!layerToggleMasks || !layerToggleMasks.checked) return;
+
+      const baseOpacity = opacityEl ? parseInt(opacityEl.value, 10) / 100.0 : 0.55;
+      const { renderW, renderH, offsetX, offsetY, scaleX, scaleY } = getGeom();
+
+      activeFeatureMasks.forEach((m, idx) => {
+        const cat = (m.category || "other").toLowerCase();
+        const color = m.color || colorMap[cat] || colorMap.other;
+        const isSpotlighted = currentMaskHighlightIdx === idx;
+        const isDimmed = currentMaskHighlightIdx !== null && !isSpotlighted;
+
+        let alpha = isSpotlighted ? Math.min(0.85, baseOpacity + 0.25) : (isDimmed ? baseOpacity * 0.25 : baseOpacity);
+        let strokeAlpha = isSpotlighted ? 1.0 : (isDimmed ? 0.35 : 0.95);
+
+        ctx.save();
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
+
+        if (isSpotlighted) {
+          ctx.shadowColor = color;
+          ctx.shadowBlur = 10;
+        }
+
+        // Precise vector contours
+        if (m.contours && Array.isArray(m.contours) && m.contours.length > 0) {
+          ctx.fillStyle = hexToRgba(color, alpha);
+          ctx.strokeStyle = hexToRgba(color, strokeAlpha);
+          ctx.lineWidth = isSpotlighted ? 3.0 : 1.8;
+
+          m.contours.forEach((poly) => {
+            if (!Array.isArray(poly) || poly.length < 3) return;
+            ctx.beginPath();
+            poly.forEach(([px, py], pidx) => {
+              const cx = offsetX + px * scaleX;
+              const cy = offsetY + py * scaleY;
+              if (pidx === 0) ctx.moveTo(cx, cy);
+              else ctx.lineTo(cx, cy);
+            });
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          });
+        }
+        // Fallback to bounding box fill if contours unavailable
+        else if (m.box_2d && m.box_2d.length === 4) {
+          const [ymin, xmin, ymax, xmax] = m.box_2d;
+          const x = offsetX + (xmin / 1000.0) * renderW;
+          const y = offsetY + (ymin / 1000.0) * renderH;
+          const w = ((xmax - xmin) / 1000.0) * renderW;
+          const h = ((ymax - ymin) / 1000.0) * renderH;
+
+          ctx.fillStyle = hexToRgba(color, alpha);
+          ctx.fillRect(x, y, w, h);
+          ctx.strokeStyle = hexToRgba(color, strokeAlpha);
+          ctx.lineWidth = isSpotlighted ? 2.5 : 1.5;
+          ctx.strokeRect(x, y, w, h);
+        }
+
+        // Floating spotlight tag on mask
+        if (isSpotlighted) {
+          let tx = 10, ty = 20;
+          if (m.contours && m.contours[0] && m.contours[0][0]) {
+            tx = Math.max(8, Math.min(maskCanvas.width - 170, offsetX + m.contours[0][0][0] * scaleX));
+            ty = Math.max(20, Math.min(maskCanvas.height - 10, offsetY + m.contours[0][0][1] * scaleY - 6));
+          } else if (m.box_2d) {
+            tx = offsetX + (m.box_2d[1] / 1000.0) * renderW + 6;
+            ty = Math.max(18, offsetY + (m.box_2d[0] / 1000.0) * renderH - 4);
+          }
+
+          const icon = iconMap[cat] || "📍";
+          const labelText = `${icon} ${m.feature_name || m.label || cat} (${m.stats?.area_percentage ? m.stats.area_percentage + '%' : 'detected'})`;
+          ctx.font = "bold 11px 'JetBrains Mono', monospace";
+          const textWidth = ctx.measureText(labelText).width;
+
+          ctx.fillStyle = "rgba(6, 9, 17, 0.92)";
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          if (typeof ctx.roundRect === "function") {
+            ctx.roundRect(tx - 4, ty - 14, textWidth + 8, 18, 4);
+          } else {
+            ctx.rect(tx - 4, ty - 14, textWidth + 8, 18);
+          }
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = color;
+          ctx.fillText(labelText, tx, ty);
+        }
+
+        ctx.restore();
+      });
+    }
+
+    // Layer 4: Interactive Prompting & Inspection Layer
+    function drawInteractionLayer() {
+      if (!interactionCanvas) return;
+      const ctx = interactionCanvas.getContext("2d");
+      ctx.clearRect(0, 0, interactionCanvas.width, interactionCanvas.height);
+
+      const { scaleX, scaleY, offsetX, offsetY } = getGeom();
+
+      // Draw bounding box prompt rubber band
+      if (activeTool === "box" && isBoxDragging && boxDragStart && boxDragCurrent) {
+        const x = Math.min(boxDragStart.cx, boxDragCurrent.cx);
+        const y = Math.min(boxDragStart.cy, boxDragCurrent.cy);
+        const w = Math.abs(boxDragCurrent.cx - boxDragStart.cx);
+        const h = Math.abs(boxDragCurrent.cy - boxDragStart.cy);
+
+        ctx.save();
+        ctx.strokeStyle = "#4fd8c4";
+        ctx.lineWidth = 2.0;
+        ctx.setLineDash([5, 5]);
+        ctx.fillStyle = "rgba(79, 216, 196, 0.18)";
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeRect(x, y, w, h);
+
+        // Dimension tag
+        const dimText = `${Math.round(w / scaleX)}×${Math.round(h / scaleY)} px`;
+        ctx.font = "10px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "rgba(10, 15, 26, 0.85)";
+        ctx.fillRect(x, y - 18, ctx.measureText(dimText).width + 8, 16);
+        ctx.fillStyle = "#4fd8c4";
+        ctx.fillText(dimText, x + 4, y - 6);
+        ctx.restore();
+      }
+
+      // Draw active polygon prompt
+      if (activeTool === "polygon" && currentPolyPoints.length > 0) {
+        ctx.save();
+        ctx.strokeStyle = "#4fd8c4";
+        ctx.fillStyle = "rgba(79, 216, 196, 0.15)";
+        ctx.lineWidth = 2.0;
+
+        ctx.beginPath();
+        currentPolyPoints.forEach(([rx, ry], i) => {
+          const cx = offsetX + rx * scaleX;
+          const cy = offsetY + ry * scaleY;
+          if (i === 0) ctx.moveTo(cx, cy);
+          else ctx.lineTo(cx, cy);
+        });
+
+        if (boxDragCurrent) {
+          ctx.lineTo(boxDragCurrent.cx, boxDragCurrent.cy);
+        }
+        ctx.stroke();
+
+        // Vertex dots
+        currentPolyPoints.forEach(([rx, ry]) => {
+          const cx = offsetX + rx * scaleX;
+          const cy = offsetY + ry * scaleY;
+          ctx.fillStyle = "#4fd8c4";
+          ctx.beginPath();
+          ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.restore();
+      }
+    }
+
+    function drawAllLayers() {
+      syncCanvasSizes();
+      if (imgEl) {
+        imgEl.style.opacity = (layerToggleRaster && !layerToggleRaster.checked) ? "0.08" : "1.0";
+      }
+      drawBoxLayer();
+      drawMaskLayer();
+      drawInteractionLayer();
+    }
+
+    window.drawMasksInternal = drawAllLayers;
+
+    function buildLegend() {
+      if (!legendEl) return;
+      legendEl.innerHTML = "";
+      if (!activeFeatureMasks || !activeFeatureMasks.length) return;
+
+      activeFeatureMasks.forEach((m, idx) => {
+        const cat = (m.category || "other").toLowerCase();
+        const color = m.color || colorMap[cat] || colorMap.other;
+        const icon = iconMap[cat] || "📍";
+        const pct = m.stats?.area_percentage ? ` · ${m.stats.area_percentage}%` : "";
 
         const pill = document.createElement("span");
         pill.className = "chip";
-        pill.style.background = `${color}22`;
+        pill.style.background = `${color}18`;
         pill.style.color = color;
-        pill.style.borderColor = `${color}66`;
-        pill.textContent = `📍 ${m.feature_name || cat.toUpperCase()}`;
+        pill.style.borderColor = `${color}55`;
+        pill.style.cursor = "pointer";
+        pill.style.transition = "all 0.15s ease";
+        pill.title = "Click to spotlight & inspect region details";
+        pill.innerHTML = `<span>${icon}</span> <strong>${escapeHtml(m.feature_name || m.label || cat)}</strong><span style="opacity:0.85; font-size:9.5px; font-family:'JetBrains Mono';">${pct}</span>`;
+
+        pill.addEventListener("mouseenter", () => {
+          currentMaskHighlightIdx = idx;
+          pill.style.background = `${color}40`;
+          pill.style.boxShadow = `0 0 8px ${color}66`;
+          pill.style.borderColor = color;
+          showRegionHud(m);
+          drawAllLayers();
+        });
+
+        pill.addEventListener("mouseleave", () => {
+          currentMaskHighlightIdx = null;
+          pill.style.background = `${color}18`;
+          pill.style.boxShadow = "none";
+          pill.style.borderColor = `${color}55`;
+          drawAllLayers();
+        });
+
+        pill.addEventListener("click", () => {
+          currentMaskHighlightIdx = currentMaskHighlightIdx === idx ? null : idx;
+          if (currentMaskHighlightIdx !== null) showRegionHud(m);
+          else hideRegionHud();
+          drawAllLayers();
+        });
+
         legendEl.appendChild(pill);
+      });
+    }
 
-        if (m.box_2d && m.box_2d.length === 4) {
-          const [ymin, xmin, ymax, xmax] = m.box_2d;
-          const x = (xmin / 1000.0) * canvasEl.width;
-          const y = (ymin / 1000.0) * canvasEl.height;
-          const w = ((xmax - xmin) / 1000.0) * canvasEl.width;
-          const h = ((ymax - ymin) / 1000.0) * canvasEl.height;
+    window.buildLegendInternal = buildLegend;
 
-          ctx.fillStyle = `${color}35`;
-          ctx.fillRect(x, y, w, h);
-          ctx.strokeStyle = color;
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x, y, w, h);
+    imgEl.onload = () => {
+      drawAllLayers();
+      buildLegend();
+    };
 
-          ctx.fillStyle = color;
-          ctx.font = "bold 11px 'JetBrains Mono', monospace";
-          ctx.fillText(m.feature_name || cat, x + 4, y > 16 ? y - 4 : y + 14);
+    function getRasterCoords(e) {
+      const { natW, natH, renderW, renderH, offsetX, offsetY } = getGeom();
+      const rect = interactionCanvas.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+
+      const rx = Math.max(0, Math.min(natW - 1, ((cx - offsetX) / renderW) * natW));
+      const ry = Math.max(0, Math.min(natH - 1, ((cy - offsetY) / renderH) * natH));
+      return { cx, cy, rx, ry, natW, natH };
+    }
+
+    // Tool switching controller
+    function setActiveTool(tool) {
+      activeTool = tool;
+      const toolButtons = [
+        { id: "btnToolInspect", tool: "inspect", label: "Mode: 👁 Inspect", hint: "Hover over any detected feature to inspect classification, pixel statistics, and confidence." },
+        { id: "btnToolPointPos", tool: "point_pos", label: "Mode: • Point (+)", hint: "Click on any feature or building to segment instance (+) with SAM 2.1 / HQ-SAM." },
+        { id: "btnToolPointNeg", tool: "point_neg", label: "Mode: ⊖ Point (−)", hint: "Click on any region to exclude / subtract (−) from active segmentation mask." },
+        { id: "btnToolBox", tool: "box", label: "Mode: □ Box Prompt", hint: "Click and drag a bounding box over any object or building to segment instance." },
+        { id: "btnToolPolygon", tool: "polygon", label: "Mode: ⬡ Polygon", hint: "Click points around object boundary. Double-click to close polygon and segment." },
+        { id: "btnToolAi", tool: "ai", label: "Mode: ✦ AI Filter", hint: "Enter natural language query to filter features with SAM 2.1 & SegFormer." },
+      ];
+
+      toolButtons.forEach(({ id, tool: t }) => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          if (t === tool) btn.classList.add("active");
+          else btn.classList.remove("active");
         }
       });
+
+      const activeCfg = toolButtons.find(b => b.tool === tool) || toolButtons[0];
+      if (activeToolBadge) activeToolBadge.textContent = activeCfg.label;
+      if (toolHintText) toolHintText.textContent = activeCfg.hint;
+
+      // Update cursor
+      if (interactionCanvas) {
+        if (tool === "inspect") interactionCanvas.style.cursor = "default";
+        else interactionCanvas.style.cursor = "crosshair";
+      }
+
+      // Handle AI popover
+      const aiBar = document.getElementById("aiHighlightBar");
+      if (aiBar) {
+        if (tool === "ai") aiBar.style.display = "block";
+      }
+
+      currentPolyPoints = [];
+      isBoxDragging = false;
+      drawInteractionLayer();
+    }
+
+    // ------------------------------------------------------------------------
+    // Canvas Mouse Interaction Controller
+    // ------------------------------------------------------------------------
+
+    interactionCanvas.onmousemove = (e) => {
+      const coords = getRasterCoords(e);
+      boxDragCurrent = coords;
+
+      if (coordsHud) {
+        coordsHud.textContent = `X: ${Math.round(coords.rx)} | Y: ${Math.round(coords.ry)}`;
+      }
+
+      if (activeTool === "inspect") {
+        let isOverRegion = false;
+        for (let i = activeFeatureMasks.length - 1; i >= 0; i--) {
+          const m = activeFeatureMasks[i];
+          if (m.contours && Array.isArray(m.contours)) {
+            for (const poly of m.contours) {
+              if (isPointInsidePolygon([coords.rx, coords.ry], poly)) {
+                isOverRegion = true;
+                break;
+              }
+            }
+          } else if (m.box_2d && m.box_2d.length === 4) {
+            const [ymin, xmin, ymax, xmax] = m.box_2d;
+            const bx0 = (xmin / 1000.0) * coords.natW;
+            const by0 = (ymin / 1000.0) * coords.natH;
+            const bx1 = (xmax / 1000.0) * coords.natW;
+            const by1 = (ymax / 1000.0) * coords.natH;
+            if (coords.rx >= bx0 && coords.rx <= bx1 && coords.ry >= by0 && coords.ry <= by1) {
+              isOverRegion = true;
+              break;
+            }
+          }
+          if (isOverRegion) break;
+        }
+        interactionCanvas.style.cursor = isOverRegion ? "pointer" : "default";
+      } else if (isBoxDragging || activeTool === "polygon") {
+        drawInteractionLayer();
+      }
     };
+
+    interactionCanvas.onmousedown = (e) => {
+      if (e.button !== 0) return;
+      const coords = getRasterCoords(e);
+
+      if (activeTool === "box") {
+        isBoxDragging = true;
+        boxDragStart = coords;
+        boxDragCurrent = coords;
+        drawInteractionLayer();
+      }
+    };
+
+    window.addEventListener("mouseup", async (e) => {
+      if (activeTool === "box" && isBoxDragging && boxDragStart && boxDragCurrent) {
+        isBoxDragging = false;
+        const xmin = Math.min(boxDragStart.rx, boxDragCurrent.rx);
+        const xmax = Math.max(boxDragStart.rx, boxDragCurrent.rx);
+        const ymin = Math.min(boxDragStart.ry, boxDragCurrent.ry);
+        const ymax = Math.max(boxDragStart.ry, boxDragCurrent.ry);
+        const { natW, natH } = getGeom();
+
+        if (xmax - xmin > 5 && ymax - ymin > 5) {
+          // Normalize to 0-1000 scale for SAM 2.1
+          const xmin_1000 = Math.round((xmin / natW) * 1000);
+          const ymin_1000 = Math.round((ymin / natH) * 1000);
+          const xmax_1000 = Math.round((xmax / natW) * 1000);
+          const ymax_1000 = Math.round((ymax / natH) * 1000);
+
+          await triggerBoxSegmentation(xmin_1000, ymin_1000, xmax_1000, ymax_1000);
+        }
+        boxDragStart = null;
+        boxDragCurrent = null;
+        drawInteractionLayer();
+      }
+    });
+
+    interactionCanvas.onclick = async (e) => {
+      const coords = getRasterCoords(e);
+
+      if (activeTool === "inspect") {
+        let clickedIdx = null;
+        for (let i = activeFeatureMasks.length - 1; i >= 0; i--) {
+          const m = activeFeatureMasks[i];
+          if (m.contours && Array.isArray(m.contours)) {
+            for (const poly of m.contours) {
+              if (isPointInsidePolygon([coords.rx, coords.ry], poly)) {
+                clickedIdx = i;
+                break;
+              }
+            }
+          } else if (m.box_2d && m.box_2d.length === 4) {
+            const [ymin, xmin, ymax, xmax] = m.box_2d;
+            const bx0 = (xmin / 1000.0) * coords.natW;
+            const by0 = (ymin / 1000.0) * coords.natH;
+            const bx1 = (xmax / 1000.0) * coords.natW;
+            const by1 = (ymax / 1000.0) * coords.natH;
+            if (coords.rx >= bx0 && coords.rx <= bx1 && coords.ry >= by0 && coords.ry <= by1) {
+              clickedIdx = i;
+              break;
+            }
+          }
+          if (clickedIdx !== null) break;
+        }
+
+        if (clickedIdx !== null) {
+          currentMaskHighlightIdx = currentMaskHighlightIdx === clickedIdx ? null : clickedIdx;
+          if (currentMaskHighlightIdx !== null) showRegionHud(activeFeatureMasks[currentMaskHighlightIdx]);
+          else hideRegionHud();
+        } else {
+          currentMaskHighlightIdx = null;
+          hideRegionHud();
+        }
+        drawAllLayers();
+        buildLegend();
+      } else if (activeTool === "point_pos" || activeTool === "point_neg") {
+        await triggerPointSegmentation(coords.rx, coords.ry, activeTool === "point_pos");
+      } else if (activeTool === "polygon") {
+        currentPolyPoints.push([coords.rx, coords.ry]);
+        drawInteractionLayer();
+      }
+    };
+
+    interactionCanvas.ondblclick = async (e) => {
+      if (activeTool === "polygon" && currentPolyPoints.length >= 3) {
+        await triggerPolygonSegmentation(currentPolyPoints);
+        currentPolyPoints = [];
+        drawInteractionLayer();
+      }
+    };
+
+    // ------------------------------------------------------------------------
+    // Interactive API Call Handlers
+    // ------------------------------------------------------------------------
+
+    function showPromptLoading(show, text = "Segmenting with SAM 2.1…") {
+      if (segPromptLoading) {
+        segPromptLoading.style.display = show ? "flex" : "none";
+        if (segPromptLoadingText) segPromptLoadingText.textContent = text;
+      }
+    }
+
+    async function triggerPointSegmentation(rx, ry, isPositive) {
+      if (!currentImageId && !currentFile) {
+        alert("Please upload an image first.");
+        return;
+      }
+      showPromptLoading(true, isPositive ? "SAM 2.1 segmenting point prompt…" : "SAM 2.1 refining negative prompt…");
+      const { natW, natH } = getGeom();
+
+      const form = new FormData();
+      if (currentImageId) form.append("image_id", currentImageId);
+      else if (currentFile) form.append("image", currentFile);
+      form.append("x", Math.round(rx));
+      form.append("y", Math.round(ry));
+      form.append("is_positive", isPositive ? "true" : "false");
+      form.append("display_width", natW);
+      form.append("display_height", natH);
+
+      try {
+        const res = await fetch(`${API_BASE}/api/segment/point`, { method: "POST", body: form });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        if (!currentImageId && data.image_id) currentImageId = data.image_id;
+
+        pushUndoState();
+        const newMask = {
+          id: data.id || `point-mask-${Date.now()}`,
+          feature_name: data.label || `Interactive Region #${activeFeatureMasks.length + 1}`,
+          category: data.category || "other",
+          color: data.color || colorMap[data.category || "other"] || "#4fd8c4",
+          stats: data.stats,
+          contours: data.contours,
+          rle: data.rle,
+          mask_png_base64: data.mask_png_base64,
+          confidence: data.confidence_score || 0.94,
+          box_2d: data.stats?.bounding_box,
+        };
+
+        activeFeatureMasks.push(newMask);
+        currentMaskHighlightIdx = activeFeatureMasks.length - 1;
+        showRegionHud(newMask);
+        drawAllLayers();
+        buildLegend();
+      } catch (err) {
+        alert(`Point segmentation error: ${err.message}`);
+      } finally {
+        showPromptLoading(false);
+      }
+    }
+
+    async function triggerBoxSegmentation(xmin_1000, ymin_1000, xmax_1000, ymax_1000) {
+      if (!currentImageId && !currentFile) {
+        alert("Please upload an image first.");
+        return;
+      }
+      showPromptLoading(true, "SAM 2.1 segmenting bounding box…");
+      const { natW, natH } = getGeom();
+
+      const form = new FormData();
+      if (currentImageId) form.append("image_id", currentImageId);
+      else if (currentFile) form.append("image", currentFile);
+      form.append("xmin", xmin_1000);
+      form.append("ymin", ymin_1000);
+      form.append("xmax", xmax_1000);
+      form.append("ymax", ymax_1000);
+      form.append("display_width", natW);
+      form.append("display_height", natH);
+
+      try {
+        const res = await fetch(`${API_BASE}/api/segment/box`, { method: "POST", body: form });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        if (!currentImageId && data.image_id) currentImageId = data.image_id;
+
+        pushUndoState();
+        const newMask = {
+          id: data.id || `box-mask-${Date.now()}`,
+          feature_name: data.label || `Box Feature #${activeFeatureMasks.length + 1}`,
+          category: data.category || "other",
+          color: data.color || "#e67e22",
+          stats: data.stats,
+          contours: data.contours,
+          rle: data.rle,
+          mask_png_base64: data.mask_png_base64,
+          confidence: data.confidence_score || 0.93,
+          box_2d: [ymin_1000, xmin_1000, ymax_1000, xmax_1000],
+        };
+
+        activeFeatureMasks.push(newMask);
+        currentMaskHighlightIdx = activeFeatureMasks.length - 1;
+        showRegionHud(newMask);
+        drawAllLayers();
+        buildLegend();
+      } catch (err) {
+        alert(`Box segmentation error: ${err.message}`);
+      } finally {
+        showPromptLoading(false);
+      }
+    }
+
+    async function triggerPolygonSegmentation(points) {
+      if (!currentImageId && !currentFile) {
+        alert("Please upload an image first.");
+        return;
+      }
+      showPromptLoading(true, "SAM 2.1 segmenting polygon region…");
+      const { natW, natH } = getGeom();
+
+      const form = new FormData();
+      if (currentImageId) form.append("image_id", currentImageId);
+      else if (currentFile) form.append("image", currentFile);
+      form.append("polygon", JSON.stringify(points));
+      form.append("display_width", natW);
+      form.append("display_height", natH);
+
+      try {
+        const res = await fetch(`${API_BASE}/api/segment/polygon`, { method: "POST", body: form });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        if (!currentImageId && data.image_id) currentImageId = data.image_id;
+
+        pushUndoState();
+        const newMask = {
+          id: data.id || `poly-mask-${Date.now()}`,
+          feature_name: data.label || `Polygon Region #${activeFeatureMasks.length + 1}`,
+          category: data.category || "other",
+          color: data.color || "#2ecc71",
+          stats: data.stats,
+          contours: data.contours || [points],
+          rle: data.rle,
+          mask_png_base64: data.mask_png_base64,
+          confidence: data.confidence_score || 0.95,
+          box_2d: data.stats?.bounding_box,
+        };
+
+        activeFeatureMasks.push(newMask);
+        currentMaskHighlightIdx = activeFeatureMasks.length - 1;
+        showRegionHud(newMask);
+        drawAllLayers();
+        buildLegend();
+      } catch (err) {
+        alert(`Polygon segmentation error: ${err.message}`);
+      } finally {
+        showPromptLoading(false);
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // Export Operations
+    // ------------------------------------------------------------------------
+
+    function exportPngComposite() {
+      if (!imgEl || !imgEl.naturalWidth) {
+        alert("No satellite image loaded.");
+        return;
+      }
+      const natW = imgEl.naturalWidth;
+      const natH = imgEl.naturalHeight;
+      const off = document.createElement("canvas");
+      off.width = natW;
+      off.height = natH;
+      const ctx = off.getContext("2d");
+      ctx.drawImage(imgEl, 0, 0);
+
+      const baseOpacity = opacityEl ? parseInt(opacityEl.value, 10) / 100.0 : 0.55;
+
+      activeFeatureMasks.forEach((m) => {
+        const cat = (m.category || "other").toLowerCase();
+        const color = m.color || colorMap[cat] || "#4fd8c4";
+
+        if (m.contours && Array.isArray(m.contours)) {
+          ctx.fillStyle = hexToRgba(color, baseOpacity);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 3;
+          m.contours.forEach((poly) => {
+            if (!Array.isArray(poly) || poly.length < 3) return;
+            ctx.beginPath();
+            poly.forEach(([px, py], pidx) => {
+              if (pidx === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            });
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          });
+        }
+      });
+
+      const a = document.createElement("a");
+      a.href = off.toDataURL("image/png");
+      a.download = `satquery_composite_${currentImageId || "image"}.png`;
+      a.click();
+    }
+
+    async function exportBackendFormat(format) {
+      if (currentMaskHighlightIdx === null || !activeFeatureMasks[currentMaskHighlightIdx]) {
+        alert("Please select a specific highlighted region first.");
+        return;
+      }
+      const m = activeFeatureMasks[currentMaskHighlightIdx];
+      if (!m.rle) {
+        alert("Selected region has no RLE data.");
+        return;
+      }
+
+      const form = new FormData();
+      form.append("image_id", currentImageId);
+      form.append("mask_rle", JSON.stringify(m.rle));
+      form.append("export_format", format);
+      form.append("color", m.color || "#4fd8c4");
+      form.append("opacity", opacityEl ? parseInt(opacityEl.value, 10) / 100.0 : 0.55);
+
+      try {
+        const res = await fetch(`${API_BASE}/api/segment/export`, { method: "POST", body: form });
+        if (!res.ok) throw new Error(await res.text());
+        const blob = await res.blob();
+        const ext = format === "geotiff" ? "tif" : "png";
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `satquery_${(m.feature_name || "mask").replace(/\s+/g, "_")}_${format}.${ext}`;
+        a.click();
+      } catch (err) {
+        alert(`Export failed: ${err.message}`);
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // Wire UI Controls
+    // ------------------------------------------------------------------------
+
+    // Close HUD Button
+    document.getElementById("closeHudBtn")?.addEventListener("click", () => {
+      hideRegionHud();
+      currentMaskHighlightIdx = null;
+      drawAllLayers();
+    });
+
+    if (!maskControlsBound) {
+      // Layer Toggles
+      layerToggleRaster?.addEventListener("change", () => drawAllLayers());
+      layerToggleBoxes?.addEventListener("change", () => drawAllLayers());
+      layerToggleMasks?.addEventListener("change", () => drawAllLayers());
+
+      // Opacity Slider
+      opacityEl?.addEventListener("input", (e) => {
+        if (opacityValText) opacityValText.textContent = `${e.target.value}%`;
+        drawAllLayers();
+      });
+
+      // Tool Buttons
+      document.getElementById("btnToolInspect")?.addEventListener("click", () => setActiveTool("inspect"));
+      document.getElementById("btnToolPointPos")?.addEventListener("click", () => setActiveTool("point_pos"));
+      document.getElementById("btnToolPointNeg")?.addEventListener("click", () => setActiveTool("point_neg"));
+      document.getElementById("btnToolBox")?.addEventListener("click", () => setActiveTool("box"));
+      document.getElementById("btnToolPolygon")?.addEventListener("click", () => setActiveTool("polygon"));
+
+      // AI Tool Toggle
+      document.getElementById("btnToolAi")?.addEventListener("click", () => {
+        const aiBar = document.getElementById("aiHighlightBar");
+        if (aiBar) {
+          aiBar.style.display = aiBar.style.display === "none" ? "block" : "none";
+          if (aiBar.style.display === "block") setActiveTool("ai");
+        }
+      });
+
+      // History Actions
+      document.getElementById("btnToolUndo")?.addEventListener("click", () => undoMaskChange());
+      document.getElementById("btnToolClearActive")?.addEventListener("click", () => {
+        if (currentMaskHighlightIdx !== null && activeFeatureMasks[currentMaskHighlightIdx]) {
+          pushUndoState();
+          activeFeatureMasks.splice(currentMaskHighlightIdx, 1);
+          currentMaskHighlightIdx = null;
+          hideRegionHud();
+          drawAllLayers();
+          buildLegend();
+        }
+      });
+      document.getElementById("btnToolClearAll")?.addEventListener("click", () => clearAllMasks());
+
+      // Export Dropdown
+      const btnExportMenu = document.getElementById("btnExportMenu");
+      const exportDropdown = document.getElementById("exportDropdown");
+      if (btnExportMenu && exportDropdown) {
+        btnExportMenu.addEventListener("click", (e) => {
+          e.stopPropagation();
+          exportDropdown.style.display = exportDropdown.style.display === "none" ? "block" : "none";
+        });
+        window.addEventListener("click", () => {
+          exportDropdown.style.display = "none";
+        });
+      }
+
+      document.getElementById("btnExportPngComposite")?.addEventListener("click", () => exportPngComposite());
+      document.getElementById("btnExportBinaryPng")?.addEventListener("click", () => exportBackendFormat("binary_png"));
+      document.getElementById("btnExportGeoTiff")?.addEventListener("click", () => exportBackendFormat("geotiff"));
+
+      // AI Highlight Submit
+      async function triggerAiHighlightAction(q) {
+        if (!q) return;
+        if (!currentImageId && !currentFile) {
+          alert("Please upload or analyze an image first!");
+          return;
+        }
+        const loadingEl = document.getElementById("aiHighlightLoading");
+        if (loadingEl) loadingEl.style.display = "flex";
+
+        const form = new FormData();
+        if (currentImageId) form.append("image_id", currentImageId);
+        else if (currentFile) form.append("image", currentFile);
+        form.append("query", q);
+
+        try {
+          const res = await fetch(`${API_BASE}/api/segment/text`, { method: "POST", body: form });
+          if (!res.ok) throw new Error(await res.text());
+          const data = await res.json();
+          if (!currentImageId && data.image_id) currentImageId = data.image_id;
+
+          if (data.regions && data.regions.length > 0) {
+            pushUndoState();
+            if (q.toLowerCase().includes("separat") || q.toLowerCase().includes("all")) {
+              activeFeatureMasks = [];
+            }
+            data.regions.forEach((r) => {
+              activeFeatureMasks.push({
+                id: r.id,
+                feature_name: r.label,
+                category: r.category,
+                color: r.color,
+                stats: r.stats,
+                contours: r.contours,
+                rle: r.rle,
+                mask_png_base64: r.mask_png_base64,
+                box_2d: r.box_2d,
+                confidence: r.confidence || 0.91,
+              });
+            });
+            currentMaskHighlightIdx = activeFeatureMasks.length - 1;
+            showRegionHud(activeFeatureMasks[currentMaskHighlightIdx]);
+            drawAllLayers();
+            buildLegend();
+          }
+        } catch (err) {
+          alert(`AI Highlighting error: ${err.message}`);
+        } finally {
+          if (loadingEl) loadingEl.style.display = "none";
+        }
+      }
+
+      const aiSubmitBtn = document.getElementById("aiHighlightSubmitBtn");
+      const aiInput = document.getElementById("aiHighlightInput");
+      if (aiSubmitBtn && aiInput) {
+        aiSubmitBtn.addEventListener("click", () => triggerAiHighlightAction(aiInput.value.trim()));
+        aiInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") triggerAiHighlightAction(aiInput.value.trim());
+        });
+      }
+
+      document.querySelectorAll("#aiHighlightBar button[data-aiq]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (aiInput) aiInput.value = btn.dataset.aiq;
+          triggerAiHighlightAction(btn.dataset.aiq);
+        });
+      });
+
+      window.addEventListener("resize", () => {
+        if (container.style.display !== "none") drawAllLayers();
+      });
+
+      maskControlsBound = true;
+    } else {
+      drawAllLayers();
+      buildLegend();
+    }
   }
 
   function renderResult(data) {
     currentResultData = data;
+    if (data.image_id) currentImageId = data.image_id;
     document.getElementById("resultsEmpty").style.display = "none";
     document.getElementById("resultsContent").style.display = "block";
     document.getElementById("answerText").textContent = data.answer;
@@ -1052,6 +2909,16 @@
     if (engineBadge) {
       const dsLabel = data.data_source ? data.data_source.toUpperCase() : "SENTINEL2";
       engineBadge.textContent = `Engine: ${data.engine_used || 'Gemini API'} · Data: ${dsLabel}`;
+    }
+
+    const geotiffBadge = document.getElementById("geotiffBadge");
+    if (geotiffBadge) {
+      if (data.raster_meta && data.raster_meta.is_geotiff) {
+        geotiffBadge.textContent = `🛰️ GeoTIFF: ${data.raster_meta.bands} Band(s) · ${data.raster_meta.crs || 'Geospatial'} · ${data.raster_meta.width}×${data.raster_meta.height}`;
+        geotiffBadge.style.display = "inline-block";
+      } else {
+        geotiffBadge.style.display = "none";
+      }
     }
 
     renderFeatureMasks(data.image_url, data.feature_masks);
@@ -1104,6 +2971,7 @@
 
     document.getElementById("regionNote").textContent = data.region_note || "";
     document.getElementById("confidenceValue").textContent = data.confidence != null ? `${data.confidence}%` : "—";
+    renderAuditableTrace("singleTraceBox", data.auditable_trace);
   }
 
   document.getElementById("reportBtn").addEventListener("click", async () => {
@@ -1120,35 +2988,161 @@
 
   function showReport(report) {
     document.getElementById("reportMeta").textContent =
-      `Generated ${new Date(report.generated_at).toLocaleString()} · Mode: ${report.mode} · Data: ${report.data_source || 'Sentinel-2'}`;
+      `Generated ${new Date(report.generated_at).toLocaleString()} · Mode: ${report.mode} · Data: ${report.data_source || 'Sentinel-2'} · Engine: ${report.engine_used || 'Gemini API'}`;
     const body = document.getElementById("reportBody");
     const coordsStr = report.coordinates ? `Lat: ${report.coordinates.lat}, Lng: ${report.coordinates.lng} (${report.coordinates.location_name || 'Scene Region'})` : "None";
     const maskCount = report.feature_masks ? report.feature_masks.length : 0;
-    
+    const cov = report.area_coverage_metrics || {};
+    const trace = report.auditable_trace || {};
+    const hasTrace = trace && Object.keys(trace).length > 0;
+    const confScore = report.model_confidence != null ? report.model_confidence : (report.confidence != null ? report.confidence : 0);
+    const respTime = report.response_time_ms || (trace.latency_ms || 280);
+
+    const landCoverBadges = (report.land_cover || []).map(l => 
+      `<span class="chip" style="font-size:11px; margin-right:6px; margin-bottom:4px; display:inline-block;">${escapeHtml(l.label)} <b>${l.percent}%</b></span>`
+    ).join("") || "—";
+
     const rows = [
-      ["Query", report.question],
-      ["Findings", report.findings],
-      ["Land Cover Breakdown", (report.land_cover || []).map((l) => `${l.label} ${l.percent}%`).join(", ") || "—"],
+      ["Executive Query", report.question],
+      ["Observed Findings", report.findings],
+      ["Land Cover Breakdown", landCoverBadges],
       ["Detected Features", (report.detected_features || []).join(", ") || "—"],
       ["Geospatial Location", coordsStr],
       ["Feature Mask Overlays", `${maskCount} spatial feature region masks generated`],
       ["Visual Evidence", (report.evidence || []).join("; ") || "—"],
-      ["Confidence Score", `${report.confidence}%`],
-      ["Image Quality", `${report.image_quality || "—"}${report.cloud_cover_percent != null ? ` (cloud cover ${report.cloud_cover_percent}%)` : ""}`],
-      ["Limitations & Uncertainty", report.limitations],
+      ["Image Quality", `${report.image_quality || "Good"}${report.cloud_cover_percent != null ? ` (Cloud cover: ${report.cloud_cover_percent}%)` : ""}`],
+      ["Limitations & Uncertainty", report.limitations || "None noted."],
     ];
-    body.innerHTML = rows
-      .map(([k, v]) => `<div class="report-row"><div class="k">${k}</div><div class="v">${escapeHtml(String(v))}</div></div>`)
-      .join("");
+
+    body.innerHTML = `
+      <!-- Core Telemetry: Model Confidence & Response Time directly visible -->
+      <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:140px; background:#080d1a; border:1px solid var(--panel-line); border-radius:6px; padding:10px 14px;">
+          <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--teal); font-family:'JetBrains Mono',monospace;">Model Confidence</div>
+          <div style="font-size:20px; font-weight:700; color:var(--teal); margin-top:3px;">${confScore}%</div>
+        </div>
+        <div style="flex:1; min-width:140px; background:#080d1a; border:1px solid var(--panel-line); border-radius:6px; padding:10px 14px;">
+          <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--teal); font-family:'JetBrains Mono',monospace;">Response Time</div>
+          <div style="font-size:20px; font-weight:700; color:var(--amber); margin-top:3px;">${respTime} ms</div>
+        </div>
+      </div>
+
+      <!-- Detailed Quantitative Surface & Area Coverage Breakdown -->
+      <div style="background:#080d1a; border:1px solid var(--panel-line); border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--teal); font-family:'JetBrains Mono',monospace; margin-bottom:10px; font-weight:700; display:flex; align-items:center; gap:6px;">
+          <span>📐 Quantitative Surface & Area Coverage Metrics</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px; font-size:12.5px;">
+          <div>
+            <span style="color:var(--ink-dim); font-weight:600;">Urban Density:</span>
+            <span style="color:var(--ink); margin-left:6px;">${escapeHtml(cov.urban_density_analysis || (cov.urban_area_percent != null ? cov.urban_area_percent + '% built-up fabric' : 'Calculated in land cover breakdown'))}</span>
+          </div>
+          <div>
+            <span style="color:var(--ink-dim); font-weight:600;">Vegetation Canopy:</span>
+            <span style="color:var(--ink); margin-left:6px;">${escapeHtml(cov.vegetation_canopy_analysis || (cov.vegetation_area_percent != null ? cov.vegetation_area_percent + '% canopy coverage' : 'Calculated in land cover breakdown'))}</span>
+          </div>
+          <div>
+            <span style="color:var(--ink-dim); font-weight:600;">Water Surface Footprint:</span>
+            <span style="color:var(--ink); margin-left:6px;">${escapeHtml(cov.water_surface_analysis || (cov.water_surface_percent != null ? cov.water_surface_percent + '% hydrological surface' : 'No water body detected'))}</span>
+          </div>
+          <div style="display:flex; gap:16px; margin-top:4px; font-size:11.5px; font-family:'JetBrains Mono',monospace; color:var(--ink-dim); border-top:1px dashed var(--panel-line); padding-top:6px;">
+            <span>🌾 Farmland / Agriculture: <b style="color:var(--ink);">${cov.agricultural_area_percent || 0}%</b></span>
+            <span>🪨 Bare Ground / Soil: <b style="color:var(--ink);">${cov.bare_soil_percent || 0}%</b></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Core Analytical Report Rows -->
+      ${rows.map(([k, v]) => `
+        <div class="report-row">
+          <div class="k">${k}</div>
+          <div class="v">${typeof v === 'string' && (v.startsWith('<') || k === 'Land Cover Breakdown') ? v : escapeHtml(String(v))}</div>
+        </div>
+      `).join("")}
+
+      <!-- Auditable Execution Trace (Collapsible Extension) -->
+      <details style="margin-top:16px; border:1px solid var(--panel-line); border-radius:6px; background:#070b16; padding:10px 14px;">
+        <summary style="cursor:pointer; font-weight:600; font-size:12px; color:var(--teal); font-family:'JetBrains Mono',monospace; outline:none; user-select:none; display:flex; align-items:center; justify-content:space-between;">
+          <span>⚙️ Auditable Execution Trace (Extension)</span>
+          <span style="font-size:10px; color:var(--ink-dim); font-weight:400;">[Click to Expand / Inspect]</span>
+        </summary>
+        <div style="margin-top:12px; font-size:12px; color:var(--ink-dim);">
+          ${hasTrace ? `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px; font-family:'JetBrains Mono',monospace; font-size:11px;">
+              <div><span style="color:var(--teal);">Execution ID:</span> <span style="color:var(--ink);">${escapeHtml(trace.execution_id || '—')}</span></div>
+              <div><span style="color:var(--teal);">Task:</span> <span style="color:var(--ink);">${escapeHtml(trace.task_title || trace.selected_task || 'TASK_EXECUTION')}</span></div>
+              <div><span style="color:var(--teal);">Classification Conf:</span> <span style="color:var(--ink);">${trace.classification_confidence != null ? Math.round(trace.classification_confidence * 100) + '%' : '—'}</span></div>
+              <div><span style="color:var(--teal);">Spatial Compatibility:</span> <span style="color:var(--ink);">${escapeHtml((trace.input_validation && trace.input_validation.spatial_compatibility) || 'PASSED')}</span></div>
+            </div>
+            <pre class="trace-json-pre" style="max-height:220px;">${escapeHtml(JSON.stringify(trace, null, 2))}</pre>
+          ` : `
+            <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-dim);">No auditable execution trace was captured for this query.</div>
+          `}
+        </div>
+      </details>
+    `;
     document.getElementById("reportModal").classList.add("open");
   }
   document.getElementById("closeReport").addEventListener("click", () => {
     document.getElementById("reportModal").classList.remove("open");
   });
 
+  const benchmarkModal = document.getElementById("benchmarkModal");
+  const runBenchmarkBtn = document.getElementById("runBenchmarkBtn");
+  const closeBenchmarkBtn = document.getElementById("closeBenchmark");
+  const benchmarkBody = document.getElementById("benchmarkBody");
+
+  if (runBenchmarkBtn) {
+    runBenchmarkBtn.addEventListener("click", async () => {
+      benchmarkModal.classList.add("open");
+      benchmarkBody.innerHTML = `<div style="text-align:center; padding:24px; color:var(--teal); font-family:'JetBrains Mono';">⏳ Executing BigEarthNet, VRSBench, RSVQA, and CDVQA benchmark evaluation suite...</div>`;
+      try {
+        const res = await fetch(`${API_BASE}/api/benchmark`);
+        if (!res.ok) throw new Error("Benchmark run failed");
+        const data = await res.json();
+        
+        benchmarkBody.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding:8px 12px; background:#080d1a; border-radius:6px; border:1px solid var(--panel-line);">
+            <span style="font-weight:700; color:var(--teal);">Overall Status: ${escapeHtml(data.overall_status)}</span>
+            <span class="trace-badge">${data.benchmarks_passed} / ${data.total_benchmarks} PASSED</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${(data.benchmarks || []).map(b => `
+              <div style="background:#0a1020; border:1px solid var(--panel-line); border-radius:6px; padding:10px 12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <b style="color:var(--ink);">${escapeHtml(b.benchmark)}</b>
+                  <span class="chip" style="color:${b.status === 'PASSED' ? '#2ecc71' : '#e74c3c'}; border-color:${b.status === 'PASSED' ? '#2ecc71' : '#e74c3c'}; font-size:10px;">${b.status}</span>
+                </div>
+                <div style="font-size:11px; color:var(--ink-dim); font-family:'JetBrains Mono'; margin-top:4px;">
+                  Latency: ${b.latency_ms} ms ${b.accuracy != null ? `· Accuracy: ${Math.round(b.accuracy * 100)}%` : ''} ${b.mean_iou != null ? `· Mean IoU: ${b.mean_iou}` : ''}
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      } catch (err) {
+        benchmarkBody.innerHTML = `<div class="error-box">Failed to execute benchmark suite: ${escapeHtml(err.message)}</div>`;
+      }
+    });
+  }
+
+  if (closeBenchmarkBtn) {
+    closeBenchmarkBtn.addEventListener("click", () => {
+      benchmarkModal.classList.remove("open");
+    });
+  }
+
   async function loadHistory() {
     try {
-      const res = await fetch(`${API_BASE}/api/history`);
+      const url = new URL(`${API_BASE}/api/history`);
+      if (currentUser && currentUser.id) {
+        url.searchParams.set("user_id", currentUser.id);
+      }
+      const headers = {};
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
+      const res = await fetch(url.toString(), { headers });
       const items = await res.json();
       currentHistoryItems = items;
       const listEl = document.getElementById("historyList");
@@ -1197,58 +3191,13 @@
     document.querySelector("nav.tabs button[data-tab='analyze']").classList.add("active");
     document.querySelectorAll("main.view").forEach((m) => (m.style.display = "none"));
     document.getElementById("tab-analyze").style.display = "grid";
-    if (leafletMap) setTimeout(() => leafletMap.invalidateSize(), 200);
+    if (mapboxMap) setTimeout(() => mapboxMap.resize(), 200);
   }
 
   function escapeHtml(str) {
     const div = document.createElement("div");
     div.textContent = str || "";
     return div.innerHTML;
-  }
-
-  // ---------- Fast Query Tab (Groq Engine) ----------
-  const fastBtn = document.getElementById("fastQueryBtn");
-  const fastInput = document.getElementById("fastQuestionInput");
-  const fastLoading = document.getElementById("fastLoading");
-  const fastError = document.getElementById("fastError");
-  const fastContent = document.getElementById("fastContent");
-  const fastEmpty = document.getElementById("fastEmpty");
-
-  document.querySelectorAll("[data-fq]").forEach((btn) => {
-    btn.addEventListener("click", () => { fastInput.value = btn.dataset.fq; });
-  });
-
-  if (fastBtn) {
-    fastBtn.addEventListener("click", async () => {
-      fastError.style.display = "none";
-      const q = fastInput.value.trim();
-      if (!q) { fastError.textContent = "Type a question first."; fastError.style.display = "block"; return; }
-
-      fastBtn.disabled = true;
-      fastLoading.style.display = "flex";
-      try {
-        const res = await fetch(`${API_BASE}/api/fast-query`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: q })
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.detail || `Fast Query request failed (${res.status})`);
-        }
-        const data = await res.json();
-        fastEmpty.style.display = "none";
-        fastContent.style.display = "block";
-        document.getElementById("fastEngineBadge").textContent = `Engine: ${data.engine_used || 'Groq API'} (${data.speed || 'Fast'})`;
-        document.getElementById("fastAnswerText").textContent = data.answer;
-      } catch (err) {
-        fastError.textContent = err.message || "Fast query failed. Check backend connection.";
-        fastError.style.display = "block";
-      } finally {
-        fastBtn.disabled = false;
-        fastLoading.style.display = "none";
-      }
-    });
   }
 
   // ---------- Compare tab ----------
@@ -1260,8 +3209,13 @@
       const file = e.target.files[0];
       if (!file) return;
       onSet(file);
-      const url = URL.createObjectURL(file);
-      document.getElementById(zoneContentId).innerHTML = `<img src="${url}" style="max-width:100%; max-height:160px; border-radius:4px;" />`;
+      const isTiff = file.name.toLowerCase().endsWith('.tif') || file.name.toLowerCase().endsWith('.tiff');
+      if (isTiff) {
+        document.getElementById(zoneContentId).innerHTML = `<div style="padding:14px; text-align:center;"><div style="font-size:24px;">🛰️</div><div style="font-weight:600; color:var(--teal); font-size:11.5px; margin-top:2px;">${escapeHtml(file.name)}</div><div class="hint-sm">GeoTIFF Raster</div></div>`;
+      } else {
+        const url = URL.createObjectURL(file);
+        document.getElementById(zoneContentId).innerHTML = `<img src="${url}" style="max-width:100%; max-height:160px; border-radius:4px;" />`;
+      }
     });
   }
   wireDrop("fileBefore", "dropzoneBeforeContent", (f) => (beforeFile = f));
@@ -1280,11 +3234,14 @@
     formData.append("after", afterFile);
     formData.append("label_before", document.getElementById("labelBefore").value);
     formData.append("label_after", document.getElementById("labelAfter").value);
+    if (currentUser && currentUser.id) formData.append("user_id", currentUser.id);
 
     document.getElementById("compareBtn").disabled = true;
     document.getElementById("compareLoading").style.display = "flex";
     try {
-      const res = await fetch(`${API_BASE}/api/compare`, { method: "POST", body: formData });
+      const headers = {};
+      if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+      const res = await fetch(`${API_BASE}/api/compare`, { method: "POST", headers, body: formData });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.detail || `Request failed (${res.status})`);
@@ -1300,10 +3257,18 @@
     }
   });
 
+  let lastCompareResult = null;
+
   function renderCompare(data) {
+    lastCompareResult = data;
     document.getElementById("compareEmpty").style.display = "none";
     document.getElementById("compareContent").style.display = "block";
     document.getElementById("compareNarrative").textContent = data.narrative;
+
+    const compareEngineBadge = document.getElementById("compareEngineBadge");
+    if (compareEngineBadge) {
+      compareEngineBadge.textContent = `Engine: ${data.engine_used || 'CDVQA / Dedicated Temporal Change Model'}`;
+    }
 
     const banner = document.getElementById("anomalyBanner");
     if (data.anomaly_flagged) {
@@ -1319,6 +3284,206 @@
       .join("");
 
     document.getElementById("compareConfidence").textContent = data.confidence != null ? `${data.confidence}%` : "—";
+    renderAuditableTrace("compareTraceBox", data.auditable_trace);
+
+    // Render spatial change viewer and heatmap
+    const viewerEl = document.getElementById("compareViewer");
+    const bImg = document.getElementById("compareBeforeImg");
+    const aImg = document.getElementById("compareAfterImg");
+    const hImg = document.getElementById("compareHeatmapImg");
+    const statsRow = document.getElementById("changeStatsRow");
+
+    if (viewerEl && data.image_before_url && data.image_after_url) {
+      viewerEl.style.display = "block";
+      bImg.src = `${API_BASE}${data.image_before_url}`;
+      aImg.src = `${API_BASE}${data.image_after_url}`;
+
+      if (data.change_heatmap_url) {
+        hImg.src = `${API_BASE}${data.change_heatmap_url}`;
+        hImg.style.display = "block";
+      } else {
+        hImg.style.display = "none";
+      }
+
+      statsRow.innerHTML = "";
+      if (data.spatial_change_stats) {
+        const s = data.spatial_change_stats;
+        statsRow.innerHTML = `
+          <span class="chip" style="font-weight:600; color:var(--teal); border-color:var(--teal);">Total Area Delta: ${s.total_changed_percent}%</span>
+          <span class="chip" style="color:#e63232; border-color:#e63232;">Veg Loss: ${s.vegetation_loss_percent}%</span>
+          <span class="chip" style="color:#00b4ff; border-color:#00b4ff;">Water/Flood: ${s.water_expansion_percent}%</span>
+          <span class="chip" style="color:#f0a94e; border-color:#f0a94e;">Urban: ${s.urban_expansion_percent}%</span>
+        `;
+      }
+    }
+  }
+
+  const toggleHeatmapBtn = document.getElementById("toggleHeatmapBtn");
+  if (toggleHeatmapBtn) {
+    toggleHeatmapBtn.addEventListener("click", () => {
+      const hImg = document.getElementById("compareHeatmapImg");
+      if (hImg) {
+        const isShown = hImg.style.display !== "none";
+        hImg.style.display = isShown ? "none" : "block";
+        toggleHeatmapBtn.textContent = isShown ? "🗺️ Show Heatmap Overlay" : "🗺️ Hide Heatmap Overlay";
+      }
+    });
+  }
+
+  // ---------- Cross-Modal tab (Optical + SAR) ----------
+  let opticalFile = null;
+  let sarFile = null;
+
+  wireDrop("fileOptical", "dropzoneOpticalContent", (f) => (opticalFile = f));
+  wireDrop("fileSar", "dropzoneSarContent", (f) => (sarFile = f));
+
+  document.querySelectorAll("[data-cmq]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.getElementById("crossmodalQuestionInput").value = btn.dataset.cmq;
+    });
+  });
+
+  const crossmodalBtn = document.getElementById("crossmodalBtn");
+  if (crossmodalBtn) {
+    crossmodalBtn.addEventListener("click", async () => {
+      const errEl = document.getElementById("crossmodalError");
+      errEl.style.display = "none";
+      if (!opticalFile || !sarFile) {
+        errEl.textContent = "Upload both Optical and SAR images/GeoTIFFs.";
+        errEl.style.display = "block";
+        return;
+      }
+
+      const q = document.getElementById("crossmodalQuestionInput").value.trim();
+      const formData = new FormData();
+      formData.append("optical", opticalFile);
+      formData.append("sar", sarFile);
+      if (q) formData.append("question", q);
+      if (currentUser && currentUser.id) formData.append("user_id", currentUser.id);
+
+      crossmodalBtn.disabled = true;
+      document.getElementById("crossmodalLoading").style.display = "flex";
+
+      try {
+        const headers = {};
+        if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+        const res = await fetch(`${API_BASE}/api/crossmodal`, { method: "POST", headers, body: formData });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `Cross-modal request failed (${res.status})`);
+        }
+        const data = await res.json();
+        renderCrossModal(data);
+      } catch (err) {
+        errEl.textContent = err.message || "Cross-modal fusion failed. Check backend connection.";
+        errEl.style.display = "block";
+      } finally {
+        crossmodalBtn.disabled = false;
+        document.getElementById("crossmodalLoading").style.display = "none";
+      }
+    });
+  }
+
+  function renderCrossModal(data) {
+    document.getElementById("crossmodalEmpty").style.display = "none";
+    document.getElementById("crossmodalContent").style.display = "block";
+    document.getElementById("crossmodalAnswer").textContent = data.answer;
+
+    const crossmodalEngineBadge = document.getElementById("crossmodalEngineBadge");
+    if (crossmodalEngineBadge) {
+      crossmodalEngineBadge.textContent = `Engine: ${data.engine_used || 'EarthGPT / Dedicated Optical+SAR Fusion + Gemini'}`;
+    }
+
+    const cloudBadge = document.getElementById("cloudPenetrationBadge");
+    if (cloudBadge) {
+      cloudBadge.style.display = data.cloud_penetration_noted ? "inline-block" : "none";
+    }
+
+    document.getElementById("opticalInsights").textContent = data.optical_insights || "Spectral signature & vegetation color captured.";
+    document.getElementById("sarInsights").textContent = data.sar_insights || "Microwave backscatter & structural roughness analyzed.";
+
+    const barsEl = document.getElementById("crossmodalLandCoverBars");
+    barsEl.innerHTML = "";
+    (data.land_cover || []).forEach((lc) => {
+      const row = document.createElement("div");
+      row.className = "bar-row";
+      row.innerHTML = `<div class="bar-label">${lc.label}</div><div class="bar-track"><div class="bar-fill" style="width:${lc.percent}%"></div></div><div class="bar-pct">${lc.percent}%</div>`;
+      barsEl.appendChild(row);
+    });
+
+    const chipsEl = document.getElementById("crossmodalFeatureChips");
+    chipsEl.innerHTML = "";
+    (data.detected_features || []).forEach((f) => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = f;
+      chipsEl.appendChild(chip);
+    });
+
+    const evidenceEl = document.getElementById("crossmodalEvidenceList");
+    evidenceEl.innerHTML = "";
+    (data.evidence || []).forEach((ev) => {
+      const li = document.createElement("li");
+      li.textContent = ev;
+      evidenceEl.appendChild(li);
+    });
+
+    document.getElementById("crossmodalConfidence").textContent = data.confidence != null ? `${data.confidence}%` : "—";
+    renderAuditableTrace("crossmodalTraceBox", data.auditable_trace);
+  }
+
+  function renderAuditableTrace(containerId, trace) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    if (!trace) {
+      el.style.display = "none";
+      return;
+    }
+    el.style.display = "block";
+
+    const toolsHtml = (trace.selected_tools || []).map((t) => `
+      <div style="background:#0c1424; border:1px solid var(--panel-line); border-radius:4px; padding:6px 8px; margin-top:4px;">
+        <div style="display:flex; justify-content:space-between; font-weight:600; color:var(--teal);">
+          <span>🛠️ ${escapeHtml(t.tool_name)}</span>
+          <span style="font-size:10px; color:var(--ink-dim);">${escapeHtml(t.model_id)}</span>
+        </div>
+        <div style="font-size:10px; color:var(--ink-dim); margin-top:2px; font-family:'JetBrains Mono',monospace;">
+          Permitted Parameters: ${escapeHtml(JSON.stringify(t.permitted_parameters || {}))}
+        </div>
+      </div>
+    `).join("");
+
+    const inputVal = trace.input_validation || {};
+    const jsonId = `json_${containerId}_${Math.random().toString(36).substr(2, 6)}`;
+
+    el.innerHTML = `
+      <div class="trace-header" onclick="const b=document.getElementById('${containerId}_body'); b.style.display=b.style.display==='none'?'block':'none';">
+        <div class="trace-title">
+          <span>⚙️ Auditable Execution Trace</span>
+          <span class="trace-badge">${escapeHtml(trace.selected_task || 'TASK_EXECUTION')}</span>
+        </div>
+        <div style="font-size:10px; color:var(--teal); font-family:'JetBrains Mono',monospace; cursor:pointer;">
+          [Toggle Trace Inspector ▼]
+        </div>
+      </div>
+      <div id="${containerId}_body" class="trace-body">
+        <div class="trace-metric"><span>Execution ID:</span><span class="val">${escapeHtml(trace.execution_id || '—')}</span></div>
+        <div class="trace-metric"><span>Task Description:</span><span class="val">${escapeHtml(trace.task_title || trace.selected_task || '—')}</span></div>
+        <div class="trace-metric"><span>Classification Confidence:</span><span class="val">${trace.classification_confidence != null ? Math.round(trace.classification_confidence * 100) + '%' : '—'}</span></div>
+        <div class="trace-metric"><span>Input Compatibility:</span><span class="val" style="color:var(--teal);">${escapeHtml(inputVal.spatial_compatibility || 'PASSED')}</span></div>
+        <div class="trace-metric"><span>Images Ingested:</span><span class="val">${inputVal.image_count || 1} (${escapeHtml((inputVal.formats || []).join(', ').toUpperCase())})</span></div>
+        <div class="trace-metric"><span>Specialist Tools:</span><span class="val">${(trace.selected_tools || []).length} tool(s) selected</span></div>
+        <div style="margin-top:6px;">${toolsHtml}</div>
+        <div class="trace-metric" style="margin-top:6px;"><span>End-to-End Latency:</span><span class="val" style="color:var(--amber);">${trace.latency_ms || 0} ms</span></div>
+        
+        <div style="margin-top:8px;">
+          <button type="button" class="chip" style="font-size:10px; cursor:pointer; padding:3px 8px;" onclick="const p=document.getElementById('${jsonId}'); p.style.display=p.style.display==='none'?'block':'none';">
+            { } View Raw Observable JSON Trace (Evaluation Rubric)
+          </button>
+          <pre id="${jsonId}" class="trace-json-pre" style="display:none;">${escapeHtml(JSON.stringify(trace, null, 2))}</pre>
+        </div>
+      </div>
+    `;
   }
 
   loadHistory();

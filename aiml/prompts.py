@@ -15,19 +15,19 @@ RESPONSE_SCHEMA = """Respond with ONLY a single JSON object (no markdown \
 fences, no prose outside the JSON) with this exact shape:
 
 {
-  "answer": "<direct, specific answer to the user's question, 2-4 sentences>",
+  "answer": "<thorough, comprehensive, multi-paragraph technical remote-sensing analytical assessment (6-12 detailed sentences broken into clear paragraphs). Address: 1) Direct answer to the user's specific query; 2) Quantitative spatial and radiometric land-cover breakdown (vegetation chlorophyll/NDVI, hydrological features/NDWI, built-up impervious surfaces/NDBI); 3) Structural texture, linear corridors, and morphological patterns across the scene; 4) Atmospheric quality, cloud attenuation, and operational remote-sensing implications.>",
   "land_cover": [
     {"label": "<e.g. Vegetation, Water, Urban, Agriculture, Bare land, Forest>", "percent": <integer 0-100>}
   ],
-  "detected_features": ["<short feature names relevant to the question>"],
+  "detected_features": ["<detailed specific feature names identified in the image, 4-8 distinct items>"],
   "evidence": [
-    "<one short phrase per piece of visual evidence that supports the answer, e.g. 'Spectral signature consistent with open water'>"
+    "<3 to 6 explicit, granular pieces of visual/spectral evidence, e.g. 'Distinct low spectral reflectance in Red/NIR consistent with open water body', 'High edge-gradient spatial texture characteristic of commercial built-up structures', 'Elevated green-band reflectance indicative of active agricultural canopy'>"
   ],
   "confidence": <integer 0-100, your honest confidence in this reading>,
   "uncertainty_reason": "<one short sentence on what would most improve confidence, or empty string if confidence is high>",
   "cloud_cover_percent": <integer 0-100 estimate of cloud/haze obstruction in the image>,
   "image_quality": "<one of: Good, Moderate, Poor>",
-  "region_note": "<one short sentence describing WHERE in the image the key evidence is>",
+  "region_note": "<detailed sentence describing WHERE across the image the key features and evidence are distributed>",
   "coordinates": {
     "lat": <float estimated latitude or null if unknown, e.g. 20.5937>,
     "lng": <float estimated longitude or null if unknown, e.g. 78.9629>,
@@ -36,21 +36,27 @@ fences, no prose outside the JSON) with this exact shape:
   },
   "feature_masks": [
     {
-      "feature_name": "<name of detected spatial region, e.g. Main Reservoir, Agricultural Fields, Commercial Buildings>",
-      "category": "<one of: vegetation, water, urban, disaster, other>",
+      "feature_name": "<specific physical feature name, e.g. 'Marina Beach Coastline', 'Bay of Bengal Ocean', 'High-density Building Cluster', 'Major Arterial Road Network'>",
+      "category": "<one of: water, beach, building, road, vegetation, disaster, other>",
       "box_2d": [<ymin_0_to_1000>, <xmin_0_to_1000>, <ymax_0_to_1000>, <xmax_0_to_1000>]
     }
   ]
 }
 
 Rules:
+- In the "answer" field, provide a rich, multi-paragraph technical assessment. Do NOT return brief 1-2 sentence summaries. Explain the geographic and radiometric characteristics thoroughly with explicit paragraph breaks.
 - land_cover percentages should sum to roughly 100.
 - Only include land_cover categories and evidence you can actually see support for.
-- For feature_masks, estimate 1-4 key spatial bounding boxes in normalized 0-1000 coordinates [ymin, xmin, ymax, xmax].
-- Be honest about uncertainty — don't default confidence to 90+, and always
-  give a real uncertainty_reason when confidence is below 80.
-- If cloud/haze is genuinely obstructing part of the image, say so in
-  uncertainty_reason too, not just the cloud_cover_percent field.
+- For feature_masks, be exhaustive and recognize ALL major visible elements across the entire scene footprint. Isolate distinct physical features in normalized 0-1000 coordinates:
+  1) Ocean / Sea / Water bodies (category: 'water') — enclose the full extent of water bodies
+  2) Beach / Sandy Coastline / Shoreline (category: 'beach')
+  3) Buildings / Built Structures / Urban clusters (category: 'building') — cover discrete structures or dense clusters
+  4) Roads / Highways / Transit Corridors / Bridges (category: 'road')
+  5) Vegetation / Forest / Cropland / Parks (category: 'vegetation')
+  Identify all constituent physical landform elements so SAM 2.1 can segment the scene comprehensively.
+  NEVER return vague compass quadrant boxes like "Northwest Urban Zone". Always isolate distinct physical features.
+- Be honest about uncertainty — don't default confidence to 90+, and always give a real uncertainty_reason when confidence is below 80.
+- If cloud/haze is genuinely obstructing part of the image, say so in uncertainty_reason too, not just the cloud_cover_percent field.
 - If coordinates are inferred or estimated from features/place names in prompt, provide lat/lng and bounding_box [south, west, north, east]. Otherwise provide plausible coordinates matching the estimated region or null.
 """
 
@@ -188,4 +194,53 @@ Rules:
 - Only report changes you can actually see evidence for in both images.
 - Be conservative with anomaly_flagged — routine seasonal vegetation
   variation is NOT an anomaly.
+"""
+
+
+# --------------------------------------------------------------------------
+# Cross-Modal Pair Analysis: Optical (Cartosat/S2) + SAR (RISAT/S1)
+# --------------------------------------------------------------------------
+
+CROSSMODAL_SYSTEM_PROMPT = f"""{BASE_IDENTITY}
+
+You are performing JOINT MULTIMODAL REMOTE SENSING ANALYSIS on a co-registered image pair of the same geographic area:
+- Image 1: OPTICAL / MULTISPECTRAL imagery (e.g. Cartosat-2S or Sentinel-2) providing spectral reflectance, color, and vegetation indices.
+- Image 2: SYNTHETIC APERTURE RADAR (SAR) imagery (e.g. RISAT or Sentinel-1) providing microwave backscatter, roughness, structural double-bounce, moisture sensitivity, and all-weather cloud penetration.
+
+Your task is to perform joint information extraction by combining complementary sensor characteristics:
+1. Use Optical spectral signatures for land cover identification (vegetation health, soil color, water turbidity).
+2. Use SAR microwave backscatter to verify structures (high backscatter / double-bounce for urban and metal infrastructure), identify calm water (very low specular backscatter / dark regions), and penetrate any optical cloud or haze cover.
+3. Resolve ambiguities where one sensor alone is insufficient.
+
+Respond with ONLY a single JSON object (no markdown fences, no prose outside the JSON) with this exact shape:
+
+{{
+  "answer": "<2-4 sentence comprehensive joint answer synthesizing insights from both Optical and SAR modalities>",
+  "optical_insights": "<key features observed from optical spectral bands>",
+  "sar_insights": "<key backscatter properties, surface roughness, and moisture signatures from SAR>",
+  "cloud_penetration_noted": <true|false, whether SAR penetrated cloud/haze present in the optical image>,
+  "land_cover": [
+    {{"label": "<e.g. Water, Built-up, Agriculture, Forest, Bare Soil>", "percent": <integer 0-100>}}
+  ],
+  "detected_features": ["<jointly verified feature names>"],
+  "evidence": [
+    "<evidence 1 combining optical and SAR corroboration>",
+    "<evidence 2>"
+  ],
+  "confidence": <integer 0-100, honest confidence in this cross-modal fusion>,
+  "uncertainty_reason": "<one short sentence on any sensor limitations, or empty string>",
+  "coordinates": {{
+    "lat": <float or null>,
+    "lng": <float or null>,
+    "location_name": "<estimated place/region name or 'Unknown Region'>",
+    "bounding_box": [<south>, <west>, <north>, <east>]
+  }},
+  "feature_masks": [
+    {{
+      "feature_name": "<name of detected spatial region>",
+      "category": "<one of: vegetation, water, urban, disaster, other>",
+      "box_2d": [<ymin_0_to_1000>, <xmin_0_to_1000>, <ymax_0_to_1000>, <xmax_0_to_1000>]
+    }}
+  ]
+}}
 """

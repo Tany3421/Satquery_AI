@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — SatQuery AI</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* 🌙 Dark Mode Theme Tokens (Exact User Specification) */
+      --bg: #050A14;
+      --panel: #0B1424;
+      --panel-elevated: #101C30;
+      --panel-line: #1B344B;
+      --input-bg: #101C30;
+      --teal: #00D9FF;
+      --teal-dim: rgba(0, 217, 255, 0.12);
+      --teal-hover: #33E2FF;
+      --amber: #FFB84D;
+      --danger: #FF526A;
+      --ink: #EAF6FF;
+      --ink-dim: #8EA4BF;
+      --primary: #00D9FF;
+      --cyan-glow: rgba(0, 217, 255, 0.35);
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius: 14px;
+    }
+
+    [data-theme="light"] {
+      /* ☀️ Light Mode Theme Tokens (Exact User Specification) */
+      --bg: #F4F8FC;
+      --panel: #FFFFFF;
+      --panel-elevated: #EAF2F8;
+      --panel-line: #D5E1EB;
+      --input-bg: #EAF2F8;
+      --teal: #009FC4;
+      --teal-dim: rgba(0, 159, 196, 0.12);
+      --teal-hover: #00B1DC;
+      --amber: #D88A00;
+      --danger: #D83B52;
+      --ink: #172337;
+      --ink-dim: #607086;
+      --primary: #009FC4;
+      --cyan-glow: rgba(0, 159, 196, 0.28);
+    }
+
+    /* Segmented Theme Switch [ ☀️ Light | 🌙 Dark ] */
+    .theme-segmented-toggle {
+      display: inline-flex;
+      align-items: center;
+      background: var(--panel-elevated);
+      border: 1px solid var(--panel-line);
+      border-radius: 100px;
+      padding: 3px;
+      gap: 2px;
+      transition: all 0.25s ease;
+    }
+    .theme-option {
+      border: none;
+      background: transparent;
+      color: var(--ink-dim);
+      font-size: 10.5px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      padding: 4px 9px;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      line-height: 1;
+    }
+    .theme-option:hover {
+      color: var(--ink);
+    }
+    .theme-option.active {
+      background: var(--teal);
+      color: #050A14;
+      box-shadow: 0 0 12px var(--cyan-glow);
+      font-weight: 700;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      position: relative;
+      overflow-x: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    [data-theme="light"] .form-input {
+      background: var(--input-bg);
+      color: var(--ink);
+    }
+
+    [data-theme="light"] .auth-tabs {
+      background: var(--panel-elevated);
+    }
+
+    /* Ambient geospatial background grid */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(circle, var(--teal-dim) 1.2px, transparent 1.3px),
+        linear-gradient(var(--panel-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--panel-line) 1px, transparent 1px),
+        linear-gradient(rgba(0, 217, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 217, 255, 0.04) 1px, transparent 1px);
+      background-size:
+        96px 96px,
+        24px 24px,
+        24px 24px,
+        96px 96px,
+        96px 96px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.65;
+    }
+
+    .auth-bg-blob {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 0%, var(--teal-dim) 0%, transparent 65%),
+        radial-gradient(circle at 85% 85%, rgba(0, 217, 255, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 15% 45%, rgba(139, 124, 255, 0.04) 0%, transparent 40%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .auth-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-line);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(79, 216, 196, 0.05);
+      width: 100%;
+      max-width: 440px;
+      padding: 2.2rem;
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(12px);
+    }
+
+    .auth-logo {
+      text-align: center;
+      margin-bottom: 1.8rem;
+    }
+
+    .auth-logo .orbit-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--teal-dim);
+      border: 1px solid rgba(79, 216, 196, 0.3);
+      border-radius: 100px;
+      font-size: 11px;
+      color: var(--teal);
+      font-family: var(--font-mono);
+      margin-bottom: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .auth-logo h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .auth-logo h1 span {
+      color: var(--teal);
+    }
+
+    .auth-logo p {
+      color: var(--ink-dim);
+      font-size: 0.85rem;
+      margin-top: 0.3rem;
+    }
+
+    /* Tabs matching smart-recipe-finder */
+    .auth-tabs {
+      display: flex;
+      background: var(--panel-elevated);
+      border: 1px solid var(--panel-line);
+      border-radius: 100px;
+      padding: 3px;
+      margin-bottom: 1.5rem;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 0.5rem;
+      border: none;
+      background: transparent;
+      border-radius: 100px;
+      color: var(--ink-dim);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .auth-tab.active {
+      background: var(--panel);
+      color: var(--teal);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--panel-line);
+    }
+
+    .auth-error {
+      background: rgba(255, 82, 106, 0.12);
+      border: 1px solid rgba(255, 82, 106, 0.35);
+      color: var(--danger);
+      padding: 0.65rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      display: none;
+      margin-bottom: 1rem;
+      font-family: var(--font-mono);
+    }
+    .auth-error.show { display: block; }
+
+    .auth-info {
+      background: rgba(0, 217, 255, 0.08);
+      border: 1px solid rgba(0, 217, 255, 0.3);
+      color: var(--teal);
+      padding: 0.75rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      display: none;
+      margin-bottom: 1rem;
+      font-family: var(--font-mono);
+      word-break: break-all;
+    }
+    .auth-info.show { display: block; }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.95rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .form-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .form-label span {
+      color: var(--danger);
+      margin-left: 2px;
+    }
+
+    .input-icon-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    .input-icon-wrap .ii {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.95rem;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--panel-line);
+      border-radius: 6px;
+      padding: 0.65rem 0.9rem 0.65rem 2.4rem;
+      color: var(--ink);
+      font-size: 0.88rem;
+      font-family: var(--font-mono);
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--teal);
+      box-shadow: 0 0 0 2px var(--teal-dim);
+      background: var(--panel-elevated);
+    }
+
+    .pw-toggle {
+      position: absolute;
+      right: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--ink-dim);
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--teal), #007C9A);
+      color: #FFFFFF;
+      border: none;
+      padding: 0.72rem 1.4rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      margin-top: 0.4rem;
+      font-family: var(--font-mono);
+      letter-spacing: 0.02em;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, var(--teal-hover), #009FC4);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px var(--cyan-glow);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .auth-footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--ink-dim);
+      margin-top: 0.8rem;
+    }
+
+    .auth-footer a {
+      color: var(--teal);
+      text-decoration: underline;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .code-tag {
+      position: absolute;
+      bottom: 12px;
+      right: 16px;
+      font-size: 9px;
+      font-family: var(--font-mono);
+      color: var(--ink-dim);
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+<div class="auth-bg-blob"></div>
+
+<div class="auth-card">
+  <div style="position:absolute; top:16px; right:16px;">
+    <div class="theme-segmented-toggle" id="loginThemeToggle" role="group" aria-label="Theme selection">
+      <button type="button" class="theme-option" id="loginThemeOptLight" onclick="setLoginTheme('light')">☀️ Light</button>
+      <button type="button" class="theme-option" id="loginThemeOptDark" onclick="setLoginTheme('dark')">🌙 Dark</button>
+    </div>
+  </div>
+  <div class="auth-logo">
+    <div class="orbit-badge">🛰️ ISRO / SIH26167 ASSISTANT</div>
+    <h1>SatQuery <span>AI</span></h1>
+    <p>Multimodal Remote Sensing Vision-Language Workspace</p>
+  </div>
+
+  <!-- Tabs (3) matching smart-recipe-finder -->
+  <div class="auth-tabs" id="tabsRow">
+    <button type="button" class="auth-tab active" id="tab-login" onclick="switchTab('login')">Log In</button>
+    <button type="button" class="auth-tab" id="tab-register" onclick="switchTab('register')">Sign Up</button>
+    <button type="button" class="auth-tab" id="tab-forgot" onclick="switchTab('forgot')" style="font-size:0.8rem">Forgot?</button>
+  </div>
+
+  <div class="auth-error" id="authError"></div>
+  <div class="auth-info" id="authInfo"></div>
+
+  <!-- ── LOGIN ── -->
+  <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
+    <div class="form-group">
+      <label class="form-label">Email or Username <span>*</span></label>
+      <div class="input-icon-wrap">
+        <span class="ii">👤</span>
+        <input type="text" class="form-input" id="loginEmail" placeholder="researcher or user@satquery.ai" required autocomplete="username">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password <span>*</span></label>
+      <div class="input-icon-wrap">
+        <span class="ii">🔒</span>
+        <input type="password" class="form-input" id="loginPw" placeholder="••••••••" required autocomplete="current-password">
+        <button type="button" class="pw-toggle" onclick="togglePw('loginPw', this)">👁</button>
+      </div>
+      <div style="text-align:right; margin-top:2px;">
+        <a href="#" onclick="switchTab('forgot'); return false" style="font-size:0.75rem; color:var(--ink-dim); text-decoration:none;">Forgot password?</a>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-primary" id="loginBtn">Log In →</button>
+    <p class="auth-footer">No account? <a href="#" onclick="switchTab('register'); return false">Sign up free</a></p>
+  </form>
+
+  <!-- ── REGISTER ── -->
+  <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)" style="display:none">
+    <div class="form-group">
+      <label class="form-label">Username <span>*</span></label>
+      <div class="input-icon-wrap">
+        <span class="ii">👤</span>
+        <input type="text" class="form-input" id="regUser" placeholder="sat_researcher" required minlength="3" autocomplete="username">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Address <span>*</span></label>
+      <div class="input-icon-wrap">
+        <span class="ii">📧</span>
+        <input type="email" class="form-input" id="regEmail" placeholder="researcher@isro.gov.in" required autocomplete="email">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password <span>*</span></label>
+      <div class="input-icon-wrap">
+        <span class="ii">🔒</span>
+        <input type="password" class="form-input" id="regPw" placeholder="Min. 6 characters" required minlength="6" autocomplete="new-password">
+        <button type="button" class="pw-toggle" onclick="togglePw('regPw', this)">👁</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirm Password <span>*</span></label>
+      <div class="input-icon-wrap">
+        <span class="ii">🔒</span>
+        <input type="password" class="form-input" id="regConfirm" placeholder="Repeat password" required autocomplete="new-password">
+      </div>
+    </div>
+    <button type="submit" class="btn-primary" id="registerBtn">Create Account →</button>
+    <p class="auth-footer">Have an account? <a href="#" onclick="switchTab('login'); return false">Log in</a></p>
+  </form>
+
+  <!-- ── FORGOT PASSWORD ── -->
+  <form class="auth-form" id="forgotForm" onsubmit="handleForgot(event)" style="display:none">
+    <p style="font-size:0.84rem; color:var(--ink-dim); line-height:1.4;">Enter your registered email and we'll generate your secure reset link.</p>
+    <div class="form-group">
+      <label class="form-label">Email Address <span>*</span></label>
+      <div class="input-icon-wrap">
+        <span class="ii">📧</span>
+        <input type="email" class="form-input" id="forgotEmail" placeholder="you@email.com" required autocomplete="email">
+      </div>
+    </div>
+    <button type="submit" class="btn-primary" id="forgotBtn">Send Reset Link 📬</button>
+    <p class="auth-footer"><a href="#" onclick="switchTab('login'); return false">← Back to Login</a></p>
+  </form>
+
+  <div class="code-tag">JWT AUTH · HS256</div>
+</div>
+
+<script>
+  const API_BASE = "http://localhost:8000";
+
+  // Light & Dark Theme Controller for Login Screen (Segmented Switch)
+  const loginThemeOptLight = document.getElementById("loginThemeOptLight");
+  const loginThemeOptDark = document.getElementById("loginThemeOptDark");
+
+  function applyLoginTheme(theme) {
+    const activeTheme = theme === "light" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", activeTheme);
+    localStorage.setItem("satquery_theme", activeTheme);
+    
+    if (loginThemeOptLight && loginThemeOptDark) {
+      if (activeTheme === "light") {
+        loginThemeOptLight.classList.add("active");
+        loginThemeOptDark.classList.remove("active");
+      } else {
+        loginThemeOptDark.classList.add("active");
+        loginThemeOptLight.classList.remove("active");
+      }
+    }
+  }
+
+  function setLoginTheme(theme) {
+    applyLoginTheme(theme);
+  }
+
+  const urlTheme = new URLSearchParams(window.location.search).get("theme");
+  const savedTheme = urlTheme || localStorage.getItem("satquery_theme") || "dark";
+  applyLoginTheme(savedTheme);
+
+  // If already logged in with JWT token, redirect immediately to main app
+  if (localStorage.getItem("satquery_token")) {
+    window.location.href = "index.html";
+  }
+
+  // URL tab switcher (e.g. ?tab=register)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("tab") === "register") switchTab("register");
+  if (urlParams.get("tab") === "forgot") switchTab("forgot");
+
+  function switchTab(tab) {
+    ['login', 'register', 'forgot'].forEach((t) => {
+      const formEl = document.getElementById(`${t}Form`);
+      const tabBtn = document.getElementById(`tab-${t}`);
+      if (formEl) formEl.style.display = (t === tab) ? 'flex' : 'none';
+      if (tabBtn) tabBtn.classList.toggle('active', t === tab);
+    });
+    clearErr();
+  }
+
+  function showErr(msg) {
+    const e = document.getElementById('authError');
+    e.textContent = msg;
+    e.classList.add('show');
+    document.getElementById('authInfo').classList.remove('show');
+  }
+
+  function clearErr() {
+    document.getElementById('authError').classList.remove('show');
+    document.getElementById('authInfo').classList.remove('show');
+  }
+
+  function showInfo(html) {
+    const e = document.getElementById('authInfo');
+    e.innerHTML = html;
+    e.classList.add('show');
+  }
+
+  function togglePw(id, btn) {
+    const input = document.getElementById(id);
+    if (!input) return;
+    const isPw = input.type === 'password';
+    input.type = isPw ? 'text' : 'password';
+    btn.textContent = isPw ? '🙈' : '👁';
+  }
+
+  // ─── LOGIN HANDLER ───
+  async function handleLogin(e) {
+    e.preventDefault();
+    clearErr();
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.textContent = 'Authenticating…';
+
+    const identifier = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPw').value;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: identifier, password })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Invalid email/username or password");
+      }
+
+      const data = await res.json();
+      localStorage.setItem("satquery_token", data.token);
+      localStorage.setItem("satquery_user", JSON.stringify(data.user));
+
+      btn.textContent = 'Success! Entering Workspace…';
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 500);
+    } catch (err) {
+      showErr(err.message);
+      btn.disabled = false;
+      btn.textContent = 'Log In →';
+    }
+  }
+
+  // ─── REGISTER HANDLER ───
+  async function handleRegister(e) {
+    e.preventDefault();
+    clearErr();
+    const username = document.getElementById('regUser').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const pw = document.getElementById('regPw').value;
+    const confirm = document.getElementById('regConfirm').value;
+
+    if (pw !== confirm) {
+      showErr('Passwords do not match');
+      return;
+    }
+
+    const btn = document.getElementById('registerBtn');
+    btn.disabled = true;
+    btn.textContent = 'Creating Account…';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password: pw })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "Registration failed");
+      }
+
+      const data = await res.json();
+      localStorage.setItem("satquery_token", data.token);
+      localStorage.setItem("satquery_user", JSON.stringify(data.user));
+
+      btn.textContent = 'Account Created! Redirecting…';
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 500);
+    } catch (err) {
+      showErr(err.message);
+      btn.disabled = false;
+      btn.textContent = 'Create Account →';
+    }
+  }
+
+  // ─── FORGOT PASSWORD HANDLER ───
+  async function handleForgot(e) {
+    e.preventDefault();
+    clearErr();
+    const email = document.getElementById('forgotEmail').value.trim();
+    const btn = document.getElementById('forgotBtn');
+    btn.disabled = true;
+    btn.textContent = 'Generating Link…';
+
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || "No registered account found with that email");
+      }
+
+      const data = await res.json();
+      showInfo(`
+        <b>📬 Reset Link Generated:</b><br>
+        <span style="font-size:11px; opacity:0.85;">Token valid for 1 hour:</span><br>
+        <a href="${data.reset_link}" style="color:var(--teal); text-decoration:underline; font-weight:700; font-size:12px; display:inline-block; margin-top:6px;">👉 Click here to Set New Password →</a>
+      `);
+    } catch (err) {
+      showErr(err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send Reset Link 📬';
+    }
+  }
+</script>
+</body>
+</html>
