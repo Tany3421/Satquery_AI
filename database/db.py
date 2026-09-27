@@ -547,6 +547,30 @@ def get_comparisons(limit: int = 10, user_id: Optional[str] = None) -> List[dict
     return result
 
 
+def get_comparison_by_id(comp_id: str) -> Optional[dict]:
+    """Retrieves a single bi-temporal comparison record by ID."""
+    mdb = _get_mongo()
+    if mdb is not None:
+        rec = mdb.comparisons.find_one({"id": comp_id}, {"_id": 0})
+        return rec
+
+    conn = sqlite3.connect(SQLITE_PATH)
+    conn.row_factory = sqlite3.Row
+    row = conn.execute("SELECT * FROM comparisons WHERE id = ?", (comp_id,)).fetchone()
+    conn.close()
+    if not row:
+        return None
+    r_dict = dict(row)
+    if "changes_json" in r_dict and r_dict["changes_json"]:
+        try:
+            r_dict["changes"] = json.loads(r_dict["changes_json"])
+        except Exception:
+            pass
+        del r_dict["changes_json"]
+    r_dict["anomaly_flagged"] = bool(r_dict.get("anomaly_flagged", 0))
+    return r_dict
+
+
 # ---------------------------------------------------------------------------
 # Cross-Modal (Optical + SAR) Extractions — Account Specific
 # ---------------------------------------------------------------------------
@@ -625,6 +649,31 @@ def get_crossmodals(limit: int = 10, user_id: Optional[str] = None) -> List[dict
         r_dict["cloud_penetration_noted"] = bool(r_dict.get("cloud_penetration_noted", 0))
         result.append(r_dict)
     return result
+
+
+def get_crossmodal_by_id(cm_id: str) -> Optional[dict]:
+    """Retrieves a single cross-modal analysis record by ID."""
+    mdb = _get_mongo()
+    if mdb is not None:
+        rec = mdb.crossmodals.find_one({"id": cm_id}, {"_id": 0})
+        return rec
+
+    conn = sqlite3.connect(SQLITE_PATH)
+    conn.row_factory = sqlite3.Row
+    row = conn.execute("SELECT * FROM crossmodals WHERE id = ?", (cm_id,)).fetchone()
+    conn.close()
+    if not row:
+        return None
+    r_dict = dict(row)
+    for field in ["land_cover_json", "detected_features_json", "evidence_json", "coordinates_json", "feature_masks_json", "optical_meta_json", "sar_meta_json"]:
+        if field in r_dict and r_dict[field]:
+            try:
+                r_dict[field.replace("_json", "")] = json.loads(r_dict[field])
+            except Exception:
+                pass
+            del r_dict[field]
+    r_dict["cloud_penetration_noted"] = bool(r_dict.get("cloud_penetration_noted", 0))
+    return r_dict
 
 
 # Auto-initialize database on import

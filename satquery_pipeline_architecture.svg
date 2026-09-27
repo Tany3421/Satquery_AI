@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 560" width="100%" height="100%" style="font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;">
+  <defs>
+    <!-- Soft Gradients matching the user's slide -->
+    <linearGradient id="bgQuery" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EBF5FF"/>
+      <stop offset="100%" stop-color="#D4EAFF"/>
+    </linearGradient>
+    <linearGradient id="bgController" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F3EDFF"/>
+      <stop offset="100%" stop-color="#E2D4FF"/>
+    </linearGradient>
+    <linearGradient id="bgVLM" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E6F6FF"/>
+      <stop offset="100%" stop-color="#CDEEFF"/>
+    </linearGradient>
+    <linearGradient id="bgGeo" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EAFBF3"/>
+      <stop offset="100%" stop-color="#D0F7E3"/>
+    </linearGradient>
+    <linearGradient id="bgEvidence" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F7F1FF"/>
+      <stop offset="100%" stop-color="#E8DBFC"/>
+    </linearGradient>
+    <linearGradient id="bgOutput" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ECEBFF"/>
+      <stop offset="100%" stop-color="#D7D4FF"/>
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="cardShadow" x="-10%" y="-10%" width="125%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f2b48" flood-opacity="0.08"/>
+    </filter>
+
+    <!-- Arrow Markers -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#7B8DA5"/>
+    </marker>
+  </defs>
+
+  <!-- Outer Dashed Card Container -->
+  <rect x="10" y="10" width="400" height="540" rx="20" fill="#FFFFFF" fill-opacity="0.9" stroke="#C5BEEB" stroke-width="1.8" stroke-dasharray="6,6"/>
+
+  <!-- Title: SatQuery AI Pipeline -->
+  <text x="210" y="42" text-anchor="middle" font-size="16" font-weight="800" fill="#13243C" letter-spacing="0.02em">SatQuery AI Pipeline</text>
+
+  <!-- Node 1: User Query & Satellite Input -->
+  <g transform="translate(60, 60)">
+    <rect width="300" height="62" rx="14" fill="url(#bgQuery)" stroke="#A6CEF7" stroke-width="1.5" filter="url(#cardShadow)"/>
+    <text x="52" y="37" font-size="22">💬🛰️</text>
+    <text x="92" y="29" font-size="13.5" font-weight="700" fill="#0C2F55">User Natural Query</text>
+    <text x="92" y="47" font-size="11.5" font-weight="500" fill="#3D6893">+ Satellite Imagery (Opt/SAR)</text>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="210" y1="122" x2="210" y2="148" stroke="#7B8DA5" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Node 2: Agentic AI Controller -->
+  <g transform="translate(60, 150)">
+    <rect width="300" height="62" rx="14" fill="url(#bgController)" stroke="#C8B1FA" stroke-width="1.5" filter="url(#cardShadow)"/>
+    <text x="52" y="38" font-size="22">🧠⚙️</text>
+    <text x="92" y="29" font-size="13.5" font-weight="700" fill="#2E1668">Agentic AI Controller</text>
+    <text x="92" y="47" font-size="11.5" font-weight="500" fill="#6A51A6">Task Routing & Intent Parsing</text>
+  </g>
+
+  <!-- Branching Arrows from Controller to Parallel Engines -->
+  <path d="M 170 212 L 170 230 Q 170 240 155 240 L 115 240 Q 105 240 105 250 L 105 258" fill="none" stroke="#7B8DA5" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 250 212 L 250 230 Q 250 240 265 240 L 305 240 Q 315 240 315 250 L 315 258" fill="none" stroke="#7B8DA5" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Node 3A: Vision-Language Models -->
+  <g transform="translate(25, 260)">
+    <rect width="175" height="88" rx="14" fill="url(#bgVLM)" stroke="#9DD8F7" stroke-width="1.5" filter="url(#cardShadow)"/>
+    <text x="87" y="32" text-anchor="middle" font-size="20">👁️‍🗨️</text>
+    <text x="87" y="52" text-anchor="middle" font-size="12" font-weight="700" fill="#0C395B">Vision-Language</text>
+    <text x="87" y="68" text-anchor="middle" font-size="11" font-weight="700" fill="#0C395B">Models (VLMs)</text>
+    <text x="87" y="82" text-anchor="middle" font-size="9.5" font-weight="500" fill="#3D6D91">Gemini / RS-VLM</text>
+  </g>
+
+  <!-- Node 3B: Geospatial & Segmentation Engine -->
+  <g transform="translate(220, 260)">
+    <rect width="175" height="88" rx="14" fill="url(#bgGeo)" stroke="#9EE4BE" stroke-width="1.5" filter="url(#cardShadow)"/>
+    <text x="87" y="32" text-anchor="middle" font-size="20">📍🗺️</text>
+    <text x="87" y="52" text-anchor="middle" font-size="12" font-weight="700" fill="#0F4C2E">Geospatial Models</text>
+    <text x="87" y="68" text-anchor="middle" font-size="11" font-weight="700" fill="#0F4C2E">& Tools (SAM 2.1)</text>
+    <text x="87" y="82" text-anchor="middle" font-size="9.5" font-weight="500" fill="#2B774E">Pixel Masks & NDVI</text>
+  </g>
+
+  <!-- Merging Arrows to Evidence Fusion -->
+  <path d="M 112 348 L 112 360 Q 112 372 135 372 L 180 372 Q 210 372 210 382 L 210 388" fill="none" stroke="#7B8DA5" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M 308 348 L 308 360 Q 308 372 285 372 L 240 372 Q 210 372 210 382 L 210 388" fill="none" stroke="#7B8DA5" stroke-width="1.8"/>
+
+  <!-- Node 4: Evidence Fusion & Confidence Scoring -->
+  <g transform="translate(60, 390)">
+    <rect width="300" height="54" rx="14" fill="url(#bgEvidence)" stroke="#D4C2F7" stroke-width="1.5" filter="url(#cardShadow)"/>
+    <text x="50" y="34" font-size="20">🛡️📊</text>
+    <text x="88" y="25" font-size="12.5" font-weight="700" fill="#311763">Evidence Fusion</text>
+    <text x="88" y="42" font-size="10.5" font-weight="500" fill="#6A4F9E">& Confidence Guardrails (0–100%)</text>
+  </g>
+
+  <!-- Arrow 4 -> 5 -->
+  <line x1="210" y1="444" x2="210" y2="466" stroke="#7B8DA5" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Node 5: Output & 3D Interactive Map -->
+  <g transform="translate(60, 468)">
+    <rect width="300" height="62" rx="14" fill="url(#bgOutput)" stroke="#B3AFFF" stroke-width="1.5" filter="url(#cardShadow)"/>
+    <text x="52" y="38" font-size="22">📑🗺️</text>
+    <text x="92" y="29" font-size="13.5" font-weight="700" fill="#1B1761">Analysis & Response</text>
+    <text x="92" y="47" font-size="11.5" font-weight="500" fill="#4B45A8">SAM 2.1 Masks + 3D Map + Report</text>
+  </g>
+</svg>

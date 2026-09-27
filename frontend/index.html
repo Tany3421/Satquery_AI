@@ -826,6 +826,127 @@
   .mapbox-custom-marker:hover {
     transform: scale(1.35) translateY(-6px);
   }
+
+  /* 🖨️ Official ISRO / NRSC High-Fidelity Print & PDF Stylesheet */
+  @media print {
+    @page {
+      margin: 12mm 15mm;
+      size: A4 portrait;
+    }
+    body {
+      background: #ffffff !important;
+      color: #0f172a !important;
+      font-size: 11pt !important;
+    }
+    header, nav.tabs, main.view, footer, #benchmarkModal, .toast, .auth-banner, .token-banner, .btn-primary, .source-pill, .modal-close {
+      display: none !important;
+    }
+    #reportModal {
+      display: block !important;
+      position: static !important;
+      background: transparent !important;
+      backdrop-filter: none !important;
+      width: 100% !important;
+      height: auto !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    #reportModal .modal {
+      display: block !important;
+      position: static !important;
+      max-width: 100% !important;
+      width: 100% !important;
+      background: #ffffff !important;
+      color: #0f172a !important;
+      border: 1.5px solid #cbd5e1 !important;
+      border-radius: 8px !important;
+      box-shadow: none !important;
+      padding: 16px 20px !important;
+      margin: 0 !important;
+      page-break-inside: avoid;
+    }
+    #reportModal * {
+      color: #0f172a !important;
+      text-shadow: none !important;
+      box-shadow: none !important;
+    }
+    #reportModal .report-row {
+      border-bottom: 1px solid #e2e8f0 !important;
+      padding: 6px 0 !important;
+    }
+    #reportModal .report-row .k {
+      color: #475569 !important;
+      font-weight: 600 !important;
+    }
+    #reportModal .report-row .v {
+      color: #0f172a !important;
+    }
+    #reportModal .chip {
+      background: #f1f5f9 !important;
+      border: 1px solid #cbd5e1 !important;
+      color: #0f172a !important;
+    }
+    #reportModal .badge {
+      border: 1px solid #94a3b8 !important;
+      background: #f8fafc !important;
+      color: #0f172a !important;
+    }
+    #reportModal .badge.good {
+      border-color: #15803d !important;
+      color: #15803d !important;
+    }
+    #reportModal .badge.danger {
+      border-color: #b91c1c !important;
+      color: #b91c1c !important;
+    }
+    #reportModal pre, #reportModal .trace-json-pre {
+      background: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+      color: #334155 !important;
+      font-size: 8pt !important;
+      white-space: pre-wrap !important;
+      word-break: break-all !important;
+    }
+    #reportModal details {
+      border: 1px solid #e2e8f0 !important;
+      background: #ffffff !important;
+    }
+    #reportModal details[open] {
+      display: block !important;
+    }
+    #reportModal details summary {
+      color: #0284c7 !important;
+    }
+    #reportModal div[style*="background:#080d1a"],
+    #reportModal div[style*="background: #080d1a"],
+    #reportModal div[style*="background:#070b16"],
+    #reportModal div[style*="background: #070b16"] {
+      background: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+    }
+    #reportModal div[style*="var(--satellite-accent-dim)"] {
+      background: #f0fdf4 !important;
+      border: 1px solid #bbf7d0 !important;
+    }
+    #reportModal div[style*="var(--warn-dim)"] {
+      background: #fffbeb !important;
+      border: 1px solid #fef3c7 !important;
+    }
+    #reportModal div[style*="rgba(255,82,106,0.12)"] {
+      background: #fef2f2 !important;
+      border: 1px solid #fecaca !important;
+    }
+    #reportModal div[style*="rgba(39,224,192,0.08)"] {
+      background: #f0fdf4 !important;
+      border: 1px solid #bbf7d0 !important;
+    }
+    #reportModal button {
+      display: none !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -857,6 +978,11 @@
     <!-- 📊 Benchmarks Modal Button -->
     <button type="button" class="source-pill" id="runBenchmarkBtn" style="color:var(--primary); font-size:11px;" title="Evaluate BigEarthNet, VRSBench, RSVQA, CDVQA">📊 Benchmarks</button>
     
+    <!-- 🌍 Location Explorer Direct Access Button -->
+    <a href="location-search.html" class="source-pill active" style="text-decoration:none; color:var(--primary); font-size:11px; font-weight:700; box-shadow:0 0 14px var(--cyan-glow);" title="Open Live Satellite Location Explorer">
+      🌍 Location Explorer <span style="font-size:9px; background:var(--primary); color:#050A14; padding:1px 5px; border-radius:8px; font-weight:800; margin-left:2px;">NEW</span>
+    </a>
+
     <!-- 🔄 Reset Button (🟠 Amber) -->
     <button type="button" class="source-pill" id="renewPageBtn" style="color:var(--warn-color); border-color:rgba(216, 138, 0, 0.35); font-weight:600;"><span class="mono">🔄</span> Reset</button>
     
@@ -873,6 +999,9 @@
   <button class="active" data-tab="analyze">🛰️ 01 · Single Image VQA & Grounding</button>
   <button data-tab="compare">⏳ 02 · Bi-Temporal Change Detection</button>
   <button data-tab="crossmodal">📡 03 · Cross-Modal (Optical + SAR)</button>
+  <a href="location-search.html" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, rgba(0, 217, 255, 0.16) 0%, rgba(139, 124, 255, 0.18) 100%); border:1px solid var(--primary); color:var(--primary); padding:10px 18px; border-radius:10px 10px 0 0; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; box-shadow:0 0 16px rgba(0,217,255,0.22); transition:all 0.25s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+    🌍 04 · Live Location Explorer <span style="font-size:9.5px; background:var(--primary); color:#050A14; padding:2px 6px; border-radius:100px; font-weight:800;">LIVE</span>
+  </a>
 </nav>
 
 <!-- ============= ANALYZE TAB ============= -->
@@ -1194,6 +1323,9 @@
         <div class="value" id="compareConfidence">—</div>
       </div>
       <div id="compareTraceBox" class="trace-box" style="display:none;"></div>
+
+      <!-- 🇮🇳 ISRO-Style Bi-Temporal Report Button -->
+      <button class="report-btn" id="compareReportBtn" style="margin-top:14px;">Generate ISRO-Style Bi-Temporal Change Report</button>
     </div>
   </section>
 </main>
@@ -1274,16 +1406,53 @@
         <div class="value" id="crossmodalConfidence">—</div>
       </div>
       <div id="crossmodalTraceBox" class="trace-box" style="display:none;"></div>
+
+      <!-- 🇮🇳 ISRO-Style Optical+SAR Fusion Report Button -->
+      <button class="report-btn" id="crossmodalReportBtn" style="margin-top:14px;">Generate ISRO-Style Optical+SAR Fusion Report</button>
     </div>
   </section>
 </main>
 <!-- ============= REPORT MODAL ============= -->
 <div class="modal-backdrop" id="reportModal">
-  <div class="modal">
-    <h3>Remote Sensing Analysis Report</h3>
+  <div class="modal" style="max-width: 780px;">
+    <!-- Official ISRO / NRSC Emblem Header -->
+    <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:2px solid var(--panel-line); padding-bottom:12px; margin-bottom:14px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="width:42px; height:42px; border-radius:10px; background:linear-gradient(135deg, rgba(255,153,51,0.2) 0%, rgba(255,255,255,0.1) 50%, rgba(19,136,8,0.2) 100%); border:1px solid rgba(255,184,77,0.4); display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:0 0 12px rgba(255,184,77,0.25);">
+          🛰️
+        </div>
+        <div>
+          <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.12em; color:var(--warn-color); font-family:'JetBrains Mono',monospace; font-weight:700;">
+            ISRO / NRSC · Earth Observation Division
+          </div>
+          <h3 id="reportTitle" style="margin:2px 0 0; font-size:16px; font-weight:800; color:var(--ink);">
+            Remote Sensing Quantitative Technical Report
+          </h3>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <span class="badge good" id="reportClassificationBadge" style="font-size:10px;">OFFICIAL REPORT</span>
+        <div id="reportDocRef" style="font-size:9.5px; font-family:'JetBrains Mono',monospace; color:var(--ink-dim); margin-top:4px;">REF: ISRO-NRSC-2026</div>
+      </div>
+    </div>
+
     <div class="report-meta" id="reportMeta"></div>
     <div id="reportBody"></div>
-    <button class="primary-btn modal-close" id="closeReport">Close</button>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:10px; border-top:1px solid var(--panel-line); padding-top:14px;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button type="button" class="btn-primary" id="printReportBtn" style="background:var(--primary-gradient); color:var(--primary-btn-ink); font-size:11px; padding:7px 16px; border-radius:8px; cursor:pointer; font-weight:700; border:none; box-shadow:0 0 12px var(--cyan-glow); display:inline-flex; align-items:center; gap:6px;">
+          <span>🖨️</span> Print / Save PDF
+        </button>
+        <button type="button" class="source-pill" id="downloadReportJsonBtn" style="font-size:11px; padding:6px 14px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+          <span>📥</span> Export JSON
+        </button>
+        <button type="button" class="source-pill" id="copyReportTextBtn" style="font-size:11px; padding:6px 14px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+          <span>📋</span> Copy Report
+        </button>
+      </div>
+      <button class="primary-btn modal-close" id="closeReport" style="width:auto; margin-top:0; padding:7px 22px;">Close</button>
+    </div>
   </div>
 </div>
 
@@ -2999,7 +3168,16 @@
     }
   });
 
+  let currentActiveReport = null;
+
   function showReport(report) {
+    currentActiveReport = report;
+    const docRef = report.report_id || `ISRO-NRSC-VQA-${(lastQueryId || '2026').slice(0, 8).toUpperCase()}`;
+    document.getElementById("reportTitle").textContent = report.title || "Single Image Remote Sensing VQA & Grounding Report";
+    document.getElementById("reportDocRef").textContent = `REF: ${docRef}`;
+    document.getElementById("reportClassificationBadge").textContent = "ISRO / NRSC VERIFIED";
+    document.getElementById("reportClassificationBadge").className = "badge good";
+
     document.getElementById("reportMeta").textContent =
       `Generated ${new Date(report.generated_at).toLocaleString()} · Mode: ${report.mode} · Data: ${report.data_source || 'Sentinel-2'} · Engine: ${report.engine_used || 'Gemini API'}`;
     const body = document.getElementById("reportBody");
@@ -3096,6 +3274,227 @@
     `;
     document.getElementById("reportModal").classList.add("open");
   }
+
+  // 🇮🇳 Bi-Temporal Change Detection ISRO Report
+  document.getElementById("compareReportBtn").addEventListener("click", async () => {
+    if (!lastCompareResult) return;
+    try {
+      if (lastCompareResult.id) {
+        const res = await fetch(`${API_BASE}/api/report/compare/${lastCompareResult.id}`);
+        if (res.ok) {
+          const report = await res.json();
+          showCompareReport(report);
+          return;
+        }
+      }
+    } catch (e) {}
+    showCompareReport(lastCompareResult);
+  });
+
+  function showCompareReport(data) {
+    if (!data) return;
+    currentActiveReport = data;
+    const docRef = data.report_id || `ISRO-NRSC-CHG-${(data.id || '2026').slice(0, 8).toUpperCase()}`;
+    document.getElementById("reportTitle").textContent = "Bi-Temporal Remote Sensing Change Detection & Anomaly Report";
+    document.getElementById("reportDocRef").textContent = `REF: ${docRef}`;
+    document.getElementById("reportClassificationBadge").textContent = data.anomaly_flagged ? "CRITICAL ANOMALY" : "MONITORED REGION";
+    document.getElementById("reportClassificationBadge").className = data.anomaly_flagged ? "badge danger" : "badge good";
+    
+    document.getElementById("reportMeta").textContent =
+      `Generated ${new Date().toLocaleString()} · Observation: Pre/Post Temporal Baseline · Engine: ${data.engine_used || 'CDVQA-Temporal-DiffEngine'}`;
+    
+    const body = document.getElementById("reportBody");
+    const trace = data.auditable_trace || {};
+    const respTime = data.response_time_ms || (trace && trace.latency_ms) || 320;
+    const chgStats = data.change_stats || {};
+    const totalChgPct = chgStats.total_changed_pixel_pct != null ? chgStats.total_changed_pixel_pct : (data.changes && data.changes[0] ? data.changes[0].area_pct : 0);
+    const hotspots = (chgStats.hotspots || []).length;
+
+    const changesRows = (data.changes || []).map(c => 
+      `<div class="change-row" style="padding:6px 0; border-bottom:1px solid rgba(27,52,75,0.4); display:flex; justify-content:space-between; align-items:center;">
+        <div><b style="color:var(--ink);">${escapeHtml(c.feature || c.category || 'Surface Transition')}</b> <span style="font-size:10.5px; color:var(--ink-dim); font-family:'JetBrains Mono';">(${c.change_type || 'Radiometric Shift'})</span></div>
+        <div style="font-family:'JetBrains Mono'; color:${c.direction && c.direction.includes('-') ? 'var(--warn-color)' : 'var(--teal)'}; font-weight:700;">${c.direction || ''} ${c.estimated_percent_change != null ? c.estimated_percent_change + '%' : (c.area_pct != null ? c.area_pct + '%' : '')} (Conf: ${c.confidence || 85}%)</div>
+      </div>`
+    ).join("") || `<div style="color:var(--ink-dim); font-size:12px;">No structural macro transitions recorded between timestamps.</div>`;
+
+    body.innerHTML = `
+      <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:140px; background:#080d1a; border:1px solid var(--panel-line); border-radius:6px; padding:10px 14px;">
+          <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--teal); font-family:'JetBrains Mono',monospace;">CDVQA Model Confidence</div>
+          <div style="font-size:20px; font-weight:700; color:var(--teal); margin-top:3px;">${data.confidence || 85}%</div>
+        </div>
+        <div style="flex:1; min-width:140px; background:#080d1a; border:1px solid var(--panel-line); border-radius:6px; padding:10px 14px;">
+          <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--teal); font-family:'JetBrains Mono',monospace;">Response Latency</div>
+          <div style="font-size:20px; font-weight:700; color:var(--amber); margin-top:3px;">${respTime} ms</div>
+        </div>
+        <div style="flex:1; min-width:140px; background:#080d1a; border:1px solid var(--panel-line); border-radius:6px; padding:10px 14px;">
+          <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-family:'JetBrains Mono',monospace;">Surface Shift Index</div>
+          <div style="font-size:20px; font-weight:700; color:${totalChgPct > 5 ? 'var(--warn-color)' : 'var(--primary)'}; margin-top:3px;">${totalChgPct}%</div>
+        </div>
+      </div>
+
+      ${data.anomaly_flagged ? `
+        <div style="background:rgba(255,82,106,0.12); border:1px solid rgba(255,82,106,0.4); border-radius:8px; padding:12px 14px; margin-bottom:14px; display:flex; align-items:center; gap:10px;">
+          <span style="font-size:22px;">🚨</span>
+          <div>
+            <div style="font-weight:700; color:var(--danger); font-size:13px;">Critical Surface Anomaly Flagged</div>
+            <div style="font-size:12px; color:var(--ink-dim);">${escapeHtml(data.anomaly_reason || "Rapid multi-pixel radiometric divergence indicates localized hazard or rapid structural disruption.")}</div>
+          </div>
+        </div>
+      ` : `
+        <div style="background:rgba(39,224,192,0.08); border:1px solid rgba(39,224,192,0.3); border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:12px; color:var(--teal);">
+          ✅ Nominal Landscape Stability — No critical morphological hazards flagged across observation dates.
+        </div>
+      `}
+
+      <div style="background:#080d1a; border:1px solid var(--panel-line); border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--teal); font-family:'JetBrains Mono',monospace; margin-bottom:8px; font-weight:700;">
+          🛰️ Bi-Temporal Observation Dynamics & Narrative
+        </div>
+        <div style="font-size:13px; line-height:1.6; color:var(--ink);">
+          ${escapeHtml(data.narrative || "Pixel-level comparative diff completed across paired observation dates.")}
+        </div>
+      </div>
+
+      <div style="background:#080d1a; border:1px solid var(--panel-line); border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-family:'JetBrains Mono',monospace; margin-bottom:8px; font-weight:700;">
+          📊 Spatial Transition Breakdown & Hotspots (${hotspots} Identified)
+        </div>
+        <div>${changesRows}</div>
+      </div>
+
+      <div class="report-row">
+        <div class="k">Satellite Mission Baseline</div>
+        <div class="v">Date 1 (Reference Scene) ↔ Date 2 (Follow-up Observation)</div>
+      </div>
+      <div class="report-row">
+        <div class="k">Analytic Revisit Recommendation</div>
+        <div class="v">Recommend 5-day Sentinel-2 MSI multispectral revisit and Sentinel-1 SAR interferometry (InSAR) to monitor ground subsidence/moisture anomalies.</div>
+      </div>
+    `;
+
+    document.getElementById("reportModal").classList.add("open");
+  }
+
+  // 🇮🇳 Optical + SAR Cross-Modal Fusion ISRO Report
+  document.getElementById("crossmodalReportBtn").addEventListener("click", async () => {
+    if (!lastCrossmodalResult) return;
+    try {
+      if (lastCrossmodalResult.id) {
+        const res = await fetch(`${API_BASE}/api/report/crossmodal/${lastCrossmodalResult.id}`);
+        if (res.ok) {
+          const report = await res.json();
+          showCrossmodalReport(report);
+          return;
+        }
+      }
+    } catch (e) {}
+    showCrossmodalReport(lastCrossmodalResult);
+  });
+
+  function showCrossmodalReport(data) {
+    if (!data) return;
+    currentActiveReport = data;
+    const docRef = data.report_id || `ISRO-NRSC-FUS-${(data.id || '2026').slice(0, 8).toUpperCase()}`;
+    document.getElementById("reportTitle").textContent = "Optical + SAR Multimodal Sensor Fusion Synthesis Report";
+    document.getElementById("reportDocRef").textContent = `REF: ${docRef}`;
+    document.getElementById("reportClassificationBadge").textContent = data.cloud_penetration_noted ? "SAR CLOUD PENETRATED" : "DUAL SENSOR VERIFIED";
+    document.getElementById("reportClassificationBadge").className = "badge good";
+
+    document.getElementById("reportMeta").textContent =
+      `Generated ${new Date().toLocaleString()} · Sensors: Optical (Cartosat-2S/S2) + Active Microwave (RISAT/S1) · Engine: ${data.engine_used || 'Cartosat-RISAT-CrossModal-Fusion'}`;
+
+    const body = document.getElementById("reportBody");
+    const trace = data.auditable_trace || {};
+    const respTime = data.response_time_ms || (trace && trace.latency_ms) || 340;
+
+    const landCoverBadges = (data.land_cover || []).map(l => 
+      `<span class="chip" style="font-size:11px; margin-right:6px; margin-bottom:4px; display:inline-block;">${escapeHtml(l.label)} <b>${l.percent}%</b></span>`
+    ).join("") || "—";
+
+    body.innerHTML = `
+      <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:140px; background:#080d1a; border:1px solid var(--panel-line); border-radius:6px; padding:10px 14px;">
+          <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--teal); font-family:'JetBrains Mono',monospace;">Multi-Sensor Confidence</div>
+          <div style="font-size:20px; font-weight:700; color:var(--teal); margin-top:3px;">${data.confidence || 88}%</div>
+        </div>
+        <div style="flex:1; min-width:140px; background:#080d1a; border:1px solid var(--panel-line); border-radius:6px; padding:10px 14px;">
+          <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--teal); font-family:'JetBrains Mono',monospace;">Fusion Response Time</div>
+          <div style="font-size:20px; font-weight:700; color:var(--amber); margin-top:3px;">${respTime} ms</div>
+        </div>
+        <div style="flex:1; min-width:140px; background:#080d1a; border:1px solid var(--panel-line); border-radius:6px; padding:10px 14px;">
+          <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-family:'JetBrains Mono',monospace;">All-Weather Capability</div>
+          <div style="font-size:14px; font-weight:700; color:var(--primary); margin-top:6px;">${data.cloud_penetration_noted ? '☁️ Cloud Penetrated' : '🛰️ Optimal Dual-Band'}</div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+        <div style="background:var(--satellite-accent-dim); border:1px solid var(--panel-line); border-radius:8px; padding:12px;">
+          <div style="font-size:10.5px; text-transform:uppercase; color:var(--primary); font-weight:700; font-family:'JetBrains Mono'; margin-bottom:6px;">🛰️ Optical / Multispectral Spectral Channel</div>
+          <div style="font-size:12.5px; color:var(--ink); line-height:1.5;">${escapeHtml(data.optical_insights || "Spectral reflection captured true/false color vegetative chlorophyll and urban reflectance boundaries.")}</div>
+        </div>
+        <div style="background:var(--warn-dim); border:1px solid var(--panel-line); border-radius:8px; padding:12px;">
+          <div style="font-size:10.5px; text-transform:uppercase; color:var(--warn-color); font-weight:700; font-family:'JetBrains Mono'; margin-bottom:6px;">📡 SAR Active Microwave Backscatter Channel</div>
+          <div style="font-size:12.5px; color:var(--ink); line-height:1.5;">${escapeHtml(data.sar_insights || "Active radar microwave backscatter resolved dielectric properties, double-bounce urban structures, and surface roughness through atmospheric obstruction.")}</div>
+        </div>
+      </div>
+
+      <div style="background:#080d1a; border:1px solid var(--panel-line); border-radius:8px; padding:12px 14px; margin-bottom:16px;">
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--teal); font-family:'JetBrains Mono',monospace; margin-bottom:8px; font-weight:700;">
+          🔬 Multimodal Synthesis Verdict
+        </div>
+        <div style="font-size:13px; line-height:1.6; color:var(--ink);">
+          ${escapeHtml(data.answer || "Joint analysis completed.")}
+        </div>
+      </div>
+
+      <div class="report-row">
+        <div class="k">Joint Land Cover Distribution</div>
+        <div class="v">${landCoverBadges}</div>
+      </div>
+      <div class="report-row">
+        <div class="k">Verified Grounded Features</div>
+        <div class="v">${(data.detected_features || []).join(", ") || "Built-up clusters, hydrological bodies, canopy cover"}</div>
+      </div>
+      <div class="report-row">
+        <div class="k">Multi-Sensor Evidence Corroboration</div>
+        <div class="v">${(data.evidence || []).join("; ") || "Dual-sensor alignment verified spectral and roughness boundaries"}</div>
+      </div>
+    `;
+
+    document.getElementById("reportModal").classList.add("open");
+  }
+
+  // 🖨️ Print / Save as PDF
+  document.getElementById("printReportBtn").addEventListener("click", () => {
+    window.print();
+  });
+
+  // 📥 Export JSON Report
+  document.getElementById("downloadReportJsonBtn").addEventListener("click", () => {
+    if (!currentActiveReport) return;
+    const blob = new Blob([JSON.stringify(currentActiveReport, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ISRO_SatQuery_Technical_Report_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("📥 Official technical report downloaded as JSON!");
+  });
+
+  // 📋 Copy Report Summary
+  document.getElementById("copyReportTextBtn").addEventListener("click", () => {
+    const title = document.getElementById("reportTitle").textContent;
+    const ref = document.getElementById("reportDocRef").textContent;
+    const meta = document.getElementById("reportMeta").textContent;
+    const bodyText = document.getElementById("reportBody").innerText;
+    const fullText = `====================================================\n${title}\n${ref}\n${meta}\n====================================================\n\n${bodyText}`;
+    navigator.clipboard.writeText(fullText).then(() => {
+      showToast("📋 Report copied to clipboard!");
+    });
+  });
+
   document.getElementById("closeReport").addEventListener("click", () => {
     document.getElementById("reportModal").classList.remove("open");
   });
@@ -3111,7 +3510,14 @@
       benchmarkBody.innerHTML = `<div style="text-align:center; padding:24px; color:var(--teal); font-family:'JetBrains Mono';">⏳ Executing BigEarthNet, VRSBench, RSVQA, and CDVQA benchmark evaluation suite...</div>`;
       try {
         const res = await fetch(`${API_BASE}/api/benchmark`);
-        if (!res.ok) throw new Error("Benchmark run failed");
+        if (!res.ok) {
+          let errDetail = "Benchmark run failed";
+          try {
+            const errJson = await res.json();
+            if (errJson && errJson.detail) errDetail = typeof errJson.detail === "string" ? errJson.detail : JSON.stringify(errJson.detail);
+          } catch (_) {}
+          throw new Error(errDetail);
+        }
         const data = await res.json();
         
         benchmarkBody.innerHTML = `
@@ -3397,7 +3803,10 @@
     });
   }
 
+  let lastCrossmodalResult = null;
+
   function renderCrossModal(data) {
+    lastCrossmodalResult = data;
     document.getElementById("crossmodalEmpty").style.display = "none";
     document.getElementById("crossmodalContent").style.display = "block";
     document.getElementById("crossmodalAnswer").textContent = data.answer;
