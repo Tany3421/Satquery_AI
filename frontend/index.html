@@ -5,8 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SatQuery AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;700&family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Sans+Gujarati:wght@400;600;700&family=Noto+Sans+Kannada:wght@400;600;700&family=Noto+Sans+Malayalam:wght@400;600;700&family=Noto+Sans+Gurmukhi:wght@400;600;700&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="locales_bundle.js"></script>
+<script src="i18n.js"></script>
 <script>
   (function() {
     const urlTheme = new URLSearchParams(window.location.search).get("theme");
@@ -188,7 +191,7 @@
     background-repeat: no-repeat, no-repeat, no-repeat, repeat, repeat;
     background-attachment: fixed;
     color: var(--ink);
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Telugu', 'Noto Sans Bengali', 'Noto Sans Gujarati', 'Noto Sans Kannada', 'Noto Sans Malayalam', 'Noto Sans Gurmukhi', -apple-system, BlinkMacSystemFont, sans-serif;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     transition: background-color 0.3s ease, color 0.3s ease;
@@ -260,21 +263,26 @@
     font-weight: 600;
   }
 
-  /* Header Bar with Glassmorphism */
   header {
     border-bottom: 1px solid var(--panel-line);
     padding: 14px 36px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
+    flex-wrap: nowrap;
+    gap: 14px;
     background: var(--header-bg);
     backdrop-filter: var(--glass-blur);
     position: sticky;
     top: 0;
     z-index: 100;
     box-shadow: var(--shadow-sm);
+  }
+  @media (max-width: 1024px) {
+    header {
+      flex-wrap: wrap;
+      padding: 10px 16px;
+    }
   }
   header .brand { display: flex; align-items: center; gap: 14px; }
   header .brand .icon-wrap {
@@ -308,16 +316,6 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     margin-top: 1px;
-  }
-  header .code {
-    font-size: 11px;
-    color: var(--primary);
-    font-family: 'JetBrains Mono', monospace;
-    background: var(--satellite-accent-dim);
-    border: 1px solid var(--panel-line);
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-weight: 600;
   }
 
   /* Segmented Theme Switch [ ☀️ Light | 🌙 Dark ] */
@@ -838,7 +836,7 @@
       color: #0f172a !important;
       font-size: 11pt !important;
     }
-    header, nav.tabs, main.view, footer, #benchmarkModal, .toast, .auth-banner, .token-banner, .btn-primary, .source-pill, .modal-close {
+    header, nav.tabs, main.view, footer, #benchmarkModal, #historyModal, .toast, .auth-banner, .token-banner, .btn-primary, .source-pill, .modal-close {
       display: none !important;
     }
     #reportModal {
@@ -959,12 +957,12 @@
         <h1>SatQuery AI</h1>
         <div class="dot" title="System Operational"></div>
       </div>
-      <div class="sub">Remote Sensing · Agentic Multimodal Intelligence</div>
+      <div class="sub" data-i18n="header_subtitle">Remote Sensing · Agentic Multimodal Intelligence</div>
     </div>
   </div>
   <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
     <!-- 🤖 Purple: AI / Engine Mode Selector -->
-    <select id="engineTypeSelector" style="padding:6px 10px; font-size:11px; background:var(--input-bg); border:1px solid var(--panel-line); color:var(--ai-color); border-radius:8px; font-family:'JetBrains Mono',monospace; cursor:pointer; font-weight:600; max-width:215px;" title="Choose execution engine mode">
+    <select id="engineTypeSelector" style="padding:6px 10px; font-size:11px; background:var(--input-bg); border:1px solid var(--panel-line); color:var(--ai-color); border-radius:8px; font-family:'JetBrains Mono',monospace; cursor:pointer; font-weight:600; max-width:180px;" title="Choose execution engine mode">
       <option value="auto">🤖 Cloud RS-VLM (Gemini 2.5)</option>
       <option value="local">💻 Offline Local VLM</option>
     </select>
@@ -976,30 +974,32 @@
     </div>
 
     <!-- 📊 Benchmarks Modal Button -->
-    <button type="button" class="source-pill" id="runBenchmarkBtn" style="color:var(--primary); font-size:11px;" title="Evaluate BigEarthNet, VRSBench, RSVQA, CDVQA">📊 Benchmarks</button>
+    <button type="button" class="source-pill" id="runBenchmarkBtn" style="color:var(--primary); font-size:11px;" title="Evaluate BigEarthNet, VRSBench, RSVQA, CDVQA" data-i18n="nav_benchmarks">📊 Benchmarks</button>
     
     <!-- 🌍 Location Explorer Direct Access Button -->
-    <a href="location-search.html" class="source-pill active" style="text-decoration:none; color:var(--primary); font-size:11px; font-weight:700; box-shadow:0 0 14px var(--cyan-glow);" title="Open Live Satellite Location Explorer">
+    <a href="location-search.html" class="source-pill active" style="text-decoration:none; color:var(--primary); font-size:11px; font-weight:700; box-shadow:0 0 14px var(--cyan-glow);" title="Open Live Satellite Location Explorer" data-i18n="nav_location_explorer">
       🌍 Location Explorer <span style="font-size:9px; background:var(--primary); color:#050A14; padding:1px 5px; border-radius:8px; font-weight:800; margin-left:2px;">NEW</span>
     </a>
 
     <!-- 🔄 Reset Button (🟠 Amber) -->
-    <button type="button" class="source-pill" id="renewPageBtn" style="color:var(--warn-color); border-color:rgba(216, 138, 0, 0.35); font-weight:600;"><span class="mono">🔄</span> Reset</button>
+    <button type="button" class="source-pill" id="renewPageBtn" style="color:var(--warn-color); border-color:rgba(216, 138, 0, 0.35); font-weight:600;"><span class="mono">🔄</span> <span data-i18n="nav_reset">Reset</span></button>
     
+    <!-- 🌐 Language Selector (Top-Right) -->
+    <div id="langSelectorContainer" style="display:inline-flex; align-items:center;"></div>
+
     <!-- User Profile & Logout (🔴 Red Logout) -->
     <div id="userHeaderBox" style="display:flex; align-items:center; gap:8px; background:var(--bg-surface); border:1px solid var(--panel-line); padding:4px 10px; border-radius:100px;">
       <span style="font-size:11.5px; font-family:'JetBrains Mono',monospace; color:var(--primary); font-weight:600;" id="headerUsername">👤 Researcher</span>
-      <button type="button" id="logoutBtn" style="padding:2px 8px; font-size:10px; border-radius:100px; border:1px solid rgba(255,82,106,0.35); color:var(--error-color); background:var(--error-dim); cursor:pointer; font-family:'JetBrains Mono',monospace; font-weight:600;">Logout</button>
+      <button type="button" id="logoutBtn" style="padding:2px 8px; font-size:10px; border-radius:100px; border:1px solid rgba(255,82,106,0.35); color:var(--error-color); background:var(--error-dim); cursor:pointer; font-family:'JetBrains Mono',monospace; font-weight:600;" data-i18n="nav_logout">Logout</button>
     </div>
-    <div class="code">SIH26167</div>
   </div>
 </header>
 
 <nav class="tabs">
-  <button class="active" data-tab="analyze">🛰️ 01 · Single Image VQA & Grounding</button>
-  <button data-tab="compare">⏳ 02 · Bi-Temporal Change Detection</button>
-  <button data-tab="crossmodal">📡 03 · Cross-Modal (Optical + SAR)</button>
-  <a href="location-search.html" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, rgba(0, 217, 255, 0.16) 0%, rgba(139, 124, 255, 0.18) 100%); border:1px solid var(--primary); color:var(--primary); padding:10px 18px; border-radius:10px 10px 0 0; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; box-shadow:0 0 16px rgba(0,217,255,0.22); transition:all 0.25s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+  <button class="active" data-tab="analyze" data-i18n="tab_analyze" data-i18n-keep-icon="🛰️">🛰️ 01 · Single Image VQA & Grounding</button>
+  <button data-tab="compare" data-i18n="tab_compare" data-i18n-keep-icon="⏳">⏳ 02 · Bi-Temporal Change Detection</button>
+  <button data-tab="crossmodal" data-i18n="tab_crossmodal" data-i18n-keep-icon="📡">📡 03 · Cross-Modal (Optical + SAR)</button>
+  <a href="location-search.html" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, rgba(0, 217, 255, 0.16) 0%, rgba(139, 124, 255, 0.18) 100%); border:1px solid var(--primary); color:var(--primary); padding:10px 18px; border-radius:10px 10px 0 0; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; box-shadow:0 0 16px rgba(0,217,255,0.22); transition:all 0.25s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'" data-i18n="tab_location">
     🌍 04 · Live Location Explorer <span style="font-size:9.5px; background:var(--primary); color:#050A14; padding:2px 6px; border-radius:100px; font-weight:800;">LIVE</span>
   </a>
 </nav>
@@ -1009,38 +1009,43 @@
   <section class="panel">
     <h2>01 · Single Image VQA & Grounding</h2>
 
-    <label class="field-label">Satellite Data Source</label>
+    <label class="field-label" data-i18n="source_label">Satellite Data Source</label>
     <div class="source-pills" id="sourcePills">
-      <button type="button" class="source-pill active" data-source="sentinel2">Sentinel-2 (Optical)</button>
-      <button type="button" class="source-pill" data-source="sentinel1">Sentinel-1 (SAR Radar)</button>
-      <button type="button" class="source-pill" data-source="fusion">🛰️+📡 S1+S2 Sensor Fusion</button>
-      <button type="button" class="source-pill" data-source="bhuvan">ISRO / Bhuvan (Indian Data)</button>
+      <button type="button" class="source-pill active" data-source="sentinel2" data-i18n="source_s2">Sentinel-2 (Optical)</button>
+      <button type="button" class="source-pill" data-source="sentinel1" data-i18n="source_s1">Sentinel-1 (SAR Radar)</button>
+      <button type="button" class="source-pill" data-source="fusion" data-i18n="source_fusion">🛰️+📡 S1+S2 Sensor Fusion</button>
+      <button type="button" class="source-pill" data-source="bhuvan" data-i18n="source_bhuvan">ISRO / Bhuvan (Indian Data)</button>
     </div>
 
-    <label class="field-label">Specialized RS Model / Domain Mode</label>
+    <label class="field-label" data-i18n="domain_mode_label">Specialized RS Model / Domain Mode</label>
     <select id="modeSelect">
-      <option value="general">🌐 General VQA</option>
-      <option value="agriculture">🌾 Agriculture & Crop Health</option>
-      <option value="disaster">🚨 Disaster & Flood Hazards</option>
-      <option value="urban">🏙️ Urban & Built-up Footprint</option>
-      <option value="environment">🌲 Vegetation & Ecosystems</option>
-      <option value="grounding">🎯 Spatial Grounding (Object Detection)</option>
-      <option value="segmentation">🗺️ BigEarthNet Semantic Segmentation</option>
+      <option value="general" data-i18n="mode_general">🌐 General VQA</option>
+      <option value="agriculture" data-i18n="mode_agri">🌾 Agriculture & Crop Health</option>
+      <option value="disaster" data-i18n="mode_disaster">🚨 Disaster & Flood Hazards</option>
+      <option value="urban" data-i18n="mode_urban">🏙️ Urban & Built-up Footprint</option>
+      <option value="environment" data-i18n="mode_env">🌲 Vegetation & Ecosystems</option>
+      <option value="grounding" data-i18n="mode_grounding">🎯 Spatial Grounding (Object Detection)</option>
+      <option value="segmentation" data-i18n="mode_seg">🗺️ BigEarthNet Semantic Segmentation</option>
     </select>
 
     <div style="margin-top:14px;">
-      <label class="field-label">Satellite Image / GeoTIFF</label>
+      <label class="field-label" data-i18n="image_upload_label">Satellite Image / GeoTIFF</label>
       <label class="dropzone" id="dropzone">
         <input type="file" id="fileInput" accept="image/*,.tif,.tiff" />
         <div id="dropzoneContent">
-          <div class="hint">Click or drop satellite image or GeoTIFF</div>
-          <div class="hint-sm">GeoTIFF (.tif, .tiff) · JPG · PNG · WEBP</div>
+          <div class="hint" data-i18n="dropzone_hint">Click or drop satellite image or GeoTIFF</div>
+          <div class="hint-sm" data-i18n="dropzone_hint_sm">GeoTIFF (.tif, .tiff) · JPG · PNG · WEBP</div>
         </div>
       </label>
     </div>
 
-    <label class="field-label" style="margin-top:14px;">Question</label>
-    <textarea id="questionInput" placeholder="e.g. What land cover types are visible in this image?"></textarea>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px;">
+      <label class="field-label" style="margin-top:0;" data-i18n="question_label">Question</label>
+      <button type="button" id="voiceBtn" class="voice-btn" title="Voice Input (Speech-to-Text)" style="background:var(--bg-surface); border:1px solid var(--panel-line); color:var(--primary); padding:3px 10px; border-radius:100px; cursor:pointer; font-size:11px; font-family:'JetBrains Mono',monospace; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s ease;">
+        <span id="voiceIcon">🎤</span> <span id="voiceText" data-i18n="voice_input">Voice</span>
+      </button>
+    </div>
+    <textarea id="questionInput" data-i18n-placeholder="question_placeholder" placeholder="e.g. What land cover types are visible in this image?"></textarea>
     <div class="quick-qs">
       <button data-q="What type of land cover is visible?">Land cover?</button>
       <button data-q="Highlight the beach, ocean, buildings, and roads separately.">Beach, Ocean, Roads & Buildings</button>
@@ -1050,16 +1055,16 @@
       <button data-q="Highlight the water body and major structures visible in this image.">Highlight structures</button>
     </div>
 
-    <button class="primary-btn" id="askBtn">Analyze Image (VLM Engine)</button>
+    <button class="primary-btn" id="askBtn" data-i18n="run_analysis_btn">Analyze Image (VLM Engine)</button>
     <div id="loadingLine" style="display:none;" class="loading-line">
-      <div class="spinner"></div> Running vision-language reasoning…
+      <div class="spinner"></div> <span data-i18n="loading_text">Running vision-language reasoning…</span>
     </div>
     <div id="errorBox" style="display:none;" class="error-box"></div>
   </section>
 
   <section class="panel">
-    <h2>02 · Analysis + Map Output</h2>
-    <div id="resultsEmpty" class="empty-state">Upload an image and ask a question to see results & map here.</div>
+    <h2 data-i18n="analysis_output_header">Analysis + Map Output</h2>
+    <div id="resultsEmpty" class="empty-state" data-i18n="results_empty">Upload an image and ask a question to see results & map here.</div>
 
     <div id="resultsContent" style="display:none;">
       <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
@@ -1232,14 +1237,8 @@
 
       <div id="singleTraceBox" class="trace-box" style="display:none;"></div>
 
-      <button class="report-btn" id="reportBtn">Generate ISRO-Style Report</button>
+      <button class="report-btn" id="reportBtn" data-i18n="btn_report">Generate ISRO-Style Report</button>
     </div>
-  </section>
-
-  <section class="panel history">
-    <h2>03 · Query History</h2>
-    <div id="historyEmpty" class="empty-state">No queries yet.</div>
-    <div id="historyList"></div>
   </section>
 </main>
 
@@ -1249,32 +1248,32 @@
     <h2>Before / After Images (Bi-Temporal Pair)</h2>
     <div class="two-col">
       <div>
-        <label class="field-label">Date 1 (Before)</label>
+        <label class="field-label" data-i18n="date_before_label">Date 1 (Before)</label>
         <label class="dropzone" id="dropzoneBefore">
           <input type="file" id="fileBefore" accept="image/*,.tif,.tiff" />
-          <div id="dropzoneBeforeContent"><div class="hint-sm">Upload GeoTIFF / JPG</div></div>
+          <div id="dropzoneBeforeContent"><div class="hint-sm" data-i18n="dropzone_hint_sm">Upload GeoTIFF / JPG</div></div>
         </label>
         <textarea id="labelBefore" placeholder="Optional label, e.g. Pre-flood / 2023" style="margin-top:8px; min-height:36px;"></textarea>
       </div>
       <div>
-        <label class="field-label">Date 2 (After)</label>
+        <label class="field-label" data-i18n="date_after_label">Date 2 (After)</label>
         <label class="dropzone" id="dropzoneAfter">
           <input type="file" id="fileAfter" accept="image/*,.tif,.tiff" />
-          <div id="dropzoneAfterContent"><div class="hint-sm">Upload GeoTIFF / JPG</div></div>
+          <div id="dropzoneAfterContent"><div class="hint-sm" data-i18n="dropzone_hint_sm">Upload GeoTIFF / JPG</div></div>
         </label>
         <textarea id="labelAfter" placeholder="Optional label, e.g. Post-flood / 2026" style="margin-top:8px; min-height:36px;"></textarea>
       </div>
     </div>
-    <button class="primary-btn" id="compareBtn">Compare Images (Change Detection)</button>
+    <button class="primary-btn" id="compareBtn" data-i18n="run_compare_btn">Compare Images (Change Detection)</button>
     <div id="compareLoading" style="display:none;" class="loading-line">
-      <div class="spinner"></div> Running bi-temporal change detection…
+      <div class="spinner"></div> <span data-i18n="loading_text">Running bi-temporal change detection…</span>
     </div>
     <div id="compareError" style="display:none;" class="error-box"></div>
   </section>
 
   <section class="panel">
-    <h2>Change Analysis & Anomaly Flagging</h2>
-    <div id="compareEmpty" class="empty-state">Upload two images of the same location to detect temporal change.</div>
+    <h2 data-i18n="change_analysis_header">Change Analysis & Anomaly Flagging</h2>
+    <div id="compareEmpty" class="empty-state" data-i18n="compare_empty">Upload two images of the same location to detect temporal change.</div>
     <div id="compareContent" style="display:none;">
       <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
         <div id="compareEngineBadge" class="engine-pill" style="margin-bottom:0;">Engine: CDVQA / Dedicated Temporal Change Model</div>
@@ -1325,7 +1324,7 @@
       <div id="compareTraceBox" class="trace-box" style="display:none;"></div>
 
       <!-- 🇮🇳 ISRO-Style Bi-Temporal Report Button -->
-      <button class="report-btn" id="compareReportBtn" style="margin-top:14px;">Generate ISRO-Style Bi-Temporal Change Report</button>
+      <button class="report-btn" id="compareReportBtn" style="margin-top:14px;" data-i18n="btn_report">Generate ISRO-Style Bi-Temporal Change Report</button>
     </div>
   </section>
 </main>
@@ -1340,23 +1339,23 @@
 
     <div class="two-col">
       <div>
-        <label class="field-label">🛰️ Optical / Multispectral (Cartosat / S2)</label>
+        <label class="field-label" data-i18n="optical_upload_label">🛰️ Optical / Multispectral (Cartosat / S2)</label>
         <label class="dropzone" id="dropzoneOptical">
           <input type="file" id="fileOptical" accept="image/*,.tif,.tiff" />
-          <div id="dropzoneOpticalContent"><div class="hint-sm">Upload Optical GeoTIFF / JPG</div></div>
+          <div id="dropzoneOpticalContent"><div class="hint-sm" data-i18n="dropzone_hint_sm">Upload Optical GeoTIFF / JPG</div></div>
         </label>
       </div>
       <div>
-        <label class="field-label">📡 Synthetic Aperture Radar (RISAT / S1)</label>
+        <label class="field-label" data-i18n="sar_upload_label">📡 Synthetic Aperture Radar (RISAT / S1)</label>
         <label class="dropzone" id="dropzoneSar">
           <input type="file" id="fileSar" accept="image/*,.tif,.tiff" />
-          <div id="dropzoneSarContent"><div class="hint-sm">Upload SAR GeoTIFF / JPG</div></div>
+          <div id="dropzoneSarContent"><div class="hint-sm" data-i18n="dropzone_hint_sm">Upload SAR GeoTIFF / JPG</div></div>
         </label>
       </div>
     </div>
 
-    <label class="field-label" style="margin-top:14px;">Joint Query</label>
-    <textarea id="crossmodalQuestionInput" placeholder="e.g. Use the optical and SAR images together to identify built-up and water-covered regions."></textarea>
+    <label class="field-label" style="margin-top:14px;" data-i18n="question_label">Joint Query</label>
+    <textarea id="crossmodalQuestionInput" data-i18n-placeholder="question_placeholder" placeholder="e.g. Use the optical and SAR images together to identify built-up and water-covered regions."></textarea>
     <div class="quick-qs">
       <button data-cmq="Use the optical and SAR images together to identify built-up and water-covered regions.">Built-up & Water</button>
       <button data-cmq="What features does the SAR backscatter reveal beneath the optical cloud cover?">Cloud Penetration</button>
@@ -1364,16 +1363,16 @@
       <button data-cmq="Extract infrastructure and vegetation using multi-sensor fusion.">Sensor Fusion</button>
     </div>
 
-    <button class="primary-btn" id="crossmodalBtn" style="margin-top: 14px;">Run Joint Cross-Modal Fusion</button>
+    <button class="primary-btn" id="crossmodalBtn" style="margin-top: 14px;" data-i18n="run_crossmodal_btn">Run Joint Cross-Modal Fusion</button>
     <div id="crossmodalLoading" style="display:none;" class="loading-line">
-      <div class="spinner"></div> Performing joint Optical-SAR reasoning…
+      <div class="spinner"></div> <span data-i18n="loading_text">Performing joint Optical-SAR reasoning…</span>
     </div>
     <div id="crossmodalError" style="display:none;" class="error-box"></div>
   </section>
 
   <section class="panel">
-    <h2>02 · Multimodal Synthesis Output</h2>
-    <div id="crossmodalEmpty" class="empty-state">Upload both Optical and SAR images to see joint analysis.</div>
+    <h2 data-i18n="multimodal_synthesis_header">Multimodal Synthesis Output</h2>
+    <div id="crossmodalEmpty" class="empty-state" data-i18n="crossmodal_empty">Upload both Optical and SAR images to see joint analysis.</div>
     <div id="crossmodalContent" style="display:none;">
       <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
         <div id="crossmodalEngineBadge" class="engine-pill" style="margin-bottom:0;">Engine: Cross-Modal Fusion</div>
@@ -1408,7 +1407,7 @@
       <div id="crossmodalTraceBox" class="trace-box" style="display:none;"></div>
 
       <!-- 🇮🇳 ISRO-Style Optical+SAR Fusion Report Button -->
-      <button class="report-btn" id="crossmodalReportBtn" style="margin-top:14px;">Generate ISRO-Style Optical+SAR Fusion Report</button>
+      <button class="report-btn" id="crossmodalReportBtn" style="margin-top:14px;" data-i18n="btn_report">Generate ISRO-Style Optical+SAR Fusion Report</button>
     </div>
   </section>
 </main>
@@ -1459,7 +1458,7 @@
 <!-- ============= BENCHMARK EVALUATION MODAL ============= -->
 <div class="modal-backdrop" id="benchmarkModal">
   <div class="modal" style="max-width: 600px;">
-    <h3>📊 SIH26167 Official Benchmark Suite</h3>
+    <h3>📊 Official Remote Sensing Benchmark Suite</h3>
     <div class="report-meta" id="benchmarkMeta">BigEarthNet · VRSBench · RSVQA · CDVQA</div>
     <div id="benchmarkBody" style="font-size:13px;">
       <div style="text-align:center; padding:20px; color:var(--teal);">Evaluating benchmarks...</div>
@@ -1468,10 +1467,53 @@
   </div>
 </div>
 
+<!-- ============= QUERY HISTORY MODAL ============= -->
+<div class="modal-backdrop" id="historyModal">
+  <div class="modal" style="max-width: 760px; max-height: 85vh; display: flex; flex-direction: column;">
+    <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--panel-line); padding-bottom:12px; margin-bottom:14px; flex-shrink:0;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:36px; height:36px; border-radius:8px; background:var(--teal-dim); border:1px solid var(--panel-line); display:flex; align-items:center; justify-content:center; font-size:18px;">
+          📜
+        </div>
+        <div>
+          <h3 style="margin:0; font-size:16px; font-weight:700; color:var(--ink);">Query & Analysis History</h3>
+          <div style="font-size:11px; color:var(--ink-dim); font-family:'JetBrains Mono',monospace;">All past single-image, bi-temporal, and geospatial analysis records</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button type="button" class="source-pill" id="refreshHistoryBtn" style="font-size:11px; padding:5px 12px; cursor:pointer;" title="Refresh History from Database">🔄 Refresh</button>
+        <button type="button" class="source-pill" id="clearHistoryBtn" style="font-size:11px; padding:5px 12px; color:var(--danger); border-color:rgba(255,82,106,0.35); cursor:pointer;" title="Clear Current Session History">🗑️ Clear</button>
+      </div>
+    </div>
+    
+    <div style="overflow-y:auto; flex:1; padding-right:4px;">
+      <div id="historyEmpty" class="empty-state" style="display:none;">No past queries found. Upload and analyze an image to build your history log.</div>
+      <div id="historyList" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+    
+    <div style="margin-top:14px; border-top:1px solid var(--panel-line); padding-top:12px; display:flex; justify-content:flex-end; flex-shrink:0;">
+      <button class="primary-btn modal-close" id="closeHistory" style="width:auto; margin-top:0; padding:7px 22px;">Close</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 <script src="segmentation.js"></script>
 <script>
   const API_BASE = window.location.protocol.startsWith("http") ? window.location.origin : "http://localhost:8000";
+
+  // ---------- Global Session & State Variables for all tabs ----------
+  let currentFile = null;
+  let currentImageId = null;
+  let lastQueryId = null;
+
+  let beforeFile = null;
+  let afterFile = null;
+  let lastCompareResult = null;
+
+  let opticalFile = null;
+  let sarFile = null;
+  let lastCrossmodalResult = null;
 
   // ---------- JWT Authentication & Session State ----------
   const authToken = localStorage.getItem("satquery_token");
@@ -1539,25 +1581,37 @@
     });
   }
 
-  // ---------- Renew Page / Reset Button ----------
+  // ---------- Renew Page / Reset Button (All Tabs) ----------
   function renewPage() {
+    // 1. Reset Single Image VQA & Grounding (Tab 1)
     currentFile = null;
     currentImageId = null;
     lastQueryId = null;
 
-    fileInput.value = "";
-    dropzoneContent.innerHTML = `
-      <div class="hint">Click to upload a satellite / aerial image</div>
-      <div class="hint-sm">JPG · PNG · WEBP</div>`;
-    dropzone.classList.remove("has-image");
+    const fileInputEl = document.getElementById("fileInput");
+    if (fileInputEl) fileInputEl.value = "";
+    const dropzoneContentEl = document.getElementById("dropzoneContent");
+    if (dropzoneContentEl) {
+      dropzoneContentEl.innerHTML = `
+        <div class="hint">Click or drop satellite image or GeoTIFF</div>
+        <div class="hint-sm">GeoTIFF (.tif, .tiff) · JPG · PNG · WEBP</div>`;
+    }
+    const dropzoneEl = document.getElementById("dropzone");
+    if (dropzoneEl) dropzoneEl.classList.remove("has-image");
 
-    questionInput.value = "";
-    if (modeSelect) modeSelect.value = "general";
+    const questionInputEl = document.getElementById("questionInput");
+    if (questionInputEl) questionInputEl.value = "";
+    const modeSelectEl = document.getElementById("modeSelect");
+    if (modeSelectEl) modeSelectEl.value = "general";
 
-    document.getElementById("resultsContent").style.display = "none";
-    document.getElementById("resultsEmpty").style.display = "block";
-    document.getElementById("errorBox").style.display = "none";
-    document.getElementById("loadingLine").style.display = "none";
+    const resultsContent = document.getElementById("resultsContent");
+    if (resultsContent) resultsContent.style.display = "none";
+    const resultsEmpty = document.getElementById("resultsEmpty");
+    if (resultsEmpty) resultsEmpty.style.display = "block";
+    const errorBox = document.getElementById("errorBox");
+    if (errorBox) errorBox.style.display = "none";
+    const loadingLine = document.getElementById("loadingLine");
+    if (loadingLine) loadingLine.style.display = "none";
 
     const mapSection = document.getElementById("mapSection");
     if (mapSection) mapSection.style.display = "none";
@@ -1568,6 +1622,8 @@
     if (maskContainer) maskContainer.style.display = "none";
     const maskLegend = document.getElementById("maskLegend");
     if (maskLegend) maskLegend.innerHTML = "";
+    const singleTraceBox = document.getElementById("singleTraceBox");
+    if (singleTraceBox) singleTraceBox.style.display = "none";
 
     if (mapboxMap) {
       if (mapMarker) { mapMarker.remove(); mapMarker = null; }
@@ -1577,8 +1633,84 @@
       mapboxMap.flyTo({ center: [78.9629, 20.5937], zoom: 4.5, pitch: 30, duration: 1200 });
     }
 
+    // 2. Reset Bi-Temporal Change Detection (Tab 2)
+    beforeFile = null;
+    afterFile = null;
+    lastCompareResult = null;
+
+    const fileBefore = document.getElementById("fileBefore");
+    if (fileBefore) fileBefore.value = "";
+    const fileAfter = document.getElementById("fileAfter");
+    if (fileAfter) fileAfter.value = "";
+    const labelBefore = document.getElementById("labelBefore");
+    if (labelBefore) labelBefore.value = "";
+    const labelAfter = document.getElementById("labelAfter");
+    if (labelAfter) labelAfter.value = "";
+
+    const dropzoneBeforeContent = document.getElementById("dropzoneBeforeContent");
+    if (dropzoneBeforeContent) dropzoneBeforeContent.innerHTML = `<div class="hint-sm">Upload GeoTIFF / JPG</div>`;
+    const dropzoneAfterContent = document.getElementById("dropzoneAfterContent");
+    if (dropzoneAfterContent) dropzoneAfterContent.innerHTML = `<div class="hint-sm">Upload GeoTIFF / JPG</div>`;
+
+    const dropzoneBefore = document.getElementById("dropzoneBefore");
+    if (dropzoneBefore) dropzoneBefore.classList.remove("has-image");
+    const dropzoneAfter = document.getElementById("dropzoneAfter");
+    if (dropzoneAfter) dropzoneAfter.classList.remove("has-image");
+
+    const compareContent = document.getElementById("compareContent");
+    if (compareContent) compareContent.style.display = "none";
+    const compareEmpty = document.getElementById("compareEmpty");
+    if (compareEmpty) compareEmpty.style.display = "block";
+    const compareError = document.getElementById("compareError");
+    if (compareError) compareError.style.display = "none";
+    const compareLoading = document.getElementById("compareLoading");
+    if (compareLoading) compareLoading.style.display = "none";
+    const compareBtn = document.getElementById("compareBtn");
+    if (compareBtn) compareBtn.disabled = false;
+    const compareTraceBox = document.getElementById("compareTraceBox");
+    if (compareTraceBox) compareTraceBox.style.display = "none";
+
+    // 3. Reset Co-Registered Optical + SAR Pair (Tab 3)
+    opticalFile = null;
+    sarFile = null;
+    lastCrossmodalResult = null;
+
+    const fileOptical = document.getElementById("fileOptical");
+    if (fileOptical) fileOptical.value = "";
+    const fileSar = document.getElementById("fileSar");
+    if (fileSar) fileSar.value = "";
+
+    const dropzoneOpticalContent = document.getElementById("dropzoneOpticalContent");
+    if (dropzoneOpticalContent) dropzoneOpticalContent.innerHTML = `<div class="hint-sm">Upload Optical GeoTIFF / JPG</div>`;
+    const dropzoneSarContent = document.getElementById("dropzoneSarContent");
+    if (dropzoneSarContent) dropzoneSarContent.innerHTML = `<div class="hint-sm">Upload SAR GeoTIFF / JPG</div>`;
+
+    const dropzoneOptical = document.getElementById("dropzoneOptical");
+    if (dropzoneOptical) dropzoneOptical.classList.remove("has-image");
+    const dropzoneSar = document.getElementById("dropzoneSar");
+    if (dropzoneSar) dropzoneSar.classList.remove("has-image");
+
+    const crossmodalQuestionInput = document.getElementById("crossmodalQuestionInput");
+    if (crossmodalQuestionInput) crossmodalQuestionInput.value = "";
+
+    const crossmodalContent = document.getElementById("crossmodalContent");
+    if (crossmodalContent) crossmodalContent.style.display = "none";
+    const crossmodalEmpty = document.getElementById("crossmodalEmpty");
+    if (crossmodalEmpty) crossmodalEmpty.style.display = "block";
+    const crossmodalError = document.getElementById("crossmodalError");
+    if (crossmodalError) crossmodalError.style.display = "none";
+    const crossmodalLoading = document.getElementById("crossmodalLoading");
+    if (crossmodalLoading) crossmodalLoading.style.display = "none";
+    const crossmodalBtn = document.getElementById("crossmodalBtn");
+    if (crossmodalBtn) crossmodalBtn.disabled = false;
+    const crossmodalTraceBox = document.getElementById("crossmodalTraceBox");
+    if (crossmodalTraceBox) crossmodalTraceBox.style.display = "none";
+
     loadHistory();
-    showToast("🔄 Page renewed for a new satellite query!");
+
+    const activeTab = document.querySelector("nav.tabs button.active");
+    const tabName = activeTab ? activeTab.textContent.trim() : "Workspace";
+    showToast(`🔄 Reset complete: ${tabName} & inputs cleared!`);
   }
 
   const renewPageBtn = document.getElementById("renewPageBtn");
@@ -1619,8 +1751,8 @@
   });
 
   // ---------- Analyze tab ----------
-  let currentFile = null;
-  let currentImageId = null;
+  currentFile = null;
+  currentImageId = null;
 
   const dropzone = document.getElementById("dropzone");
   const fileInput = document.getElementById("fileInput");
@@ -1650,7 +1782,7 @@
     btn.addEventListener("click", () => { questionInput.value = btn.dataset.q; });
   });
 
-  let lastQueryId = null;
+  lastQueryId = null;
   let currentHistoryItems = [];
 
   askBtn.addEventListener("click", async () => {
@@ -1666,6 +1798,7 @@
     formData.append("data_source", selectedDataSource);
     const engType = document.getElementById("engineTypeSelector") ? document.getElementById("engineTypeSelector").value : "auto";
     formData.append("engine_type", engType);
+    if (window.i18n && window.i18n.currentLang) formData.append("language", window.i18n.currentLang);
     if (currentUser && currentUser.id) formData.append("user_id", currentUser.id);
     if (currentFile) formData.append("image", currentFile);
     else formData.append("image_id", currentImageId);
@@ -3590,6 +3723,11 @@
   function openHistoryQuery(id) {
     const item = currentHistoryItems.find((i) => i.id === id);
     if (!item) return;
+
+    // Close history modal if open
+    const histModal = document.getElementById("historyModal");
+    if (histModal) histModal.classList.remove("open");
+
     lastQueryId = item.id;
     currentImageId = item.image_id;
     questionInput.value = item.question;
@@ -3619,9 +3757,67 @@
     return div.innerHTML;
   }
 
+  // ---------- Query History Modal Management ----------
+  const historyModal = document.getElementById("historyModal");
+  const openHistoryBtn = document.getElementById("openHistoryBtn");
+  const closeHistoryBtn = document.getElementById("closeHistory");
+  const refreshHistoryBtn = document.getElementById("refreshHistoryBtn");
+  const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+
+  if (openHistoryBtn) {
+    openHistoryBtn.addEventListener("click", () => {
+      loadHistory();
+      if (historyModal) historyModal.classList.add("open");
+    });
+  }
+
+  if (closeHistoryBtn) {
+    closeHistoryBtn.addEventListener("click", () => {
+      if (historyModal) historyModal.classList.remove("open");
+    });
+  }
+
+  if (historyModal) {
+    historyModal.addEventListener("click", (e) => {
+      if (e.target === historyModal) historyModal.classList.remove("open");
+    });
+  }
+
+  if (refreshHistoryBtn) {
+    refreshHistoryBtn.addEventListener("click", () => {
+      loadHistory();
+      showToast("🔄 History refreshed from database");
+    });
+  }
+
+  if (clearHistoryBtn) {
+    clearHistoryBtn.addEventListener("click", async () => {
+      if (!confirm("Are you sure you want to clear your query history?")) return;
+      try {
+        const url = new URL(`${API_BASE}/api/history`);
+        if (currentUser && currentUser.id) url.searchParams.set("user_id", currentUser.id);
+        const headers = {};
+        if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+        const res = await fetch(url.toString(), { method: "DELETE", headers });
+        if (res.ok) {
+          currentHistoryItems = [];
+          const listEl = document.getElementById("historyList");
+          const emptyEl = document.getElementById("historyEmpty");
+          if (listEl) listEl.innerHTML = "";
+          if (emptyEl) emptyEl.style.display = "block";
+          showToast("🗑️ History cleared successfully");
+        } else {
+          throw new Error("Failed to clear history");
+        }
+      } catch (err) {
+        showToast("⚠️ Could not clear history");
+      }
+    });
+  }
+
   // ---------- Compare tab ----------
-  let beforeFile = null;
-  let afterFile = null;
+  beforeFile = null;
+  afterFile = null;
 
   function wireDrop(inputId, zoneContentId, onSet) {
     document.getElementById(inputId).addEventListener("change", (e) => {
@@ -3653,6 +3849,7 @@
     formData.append("after", afterFile);
     formData.append("label_before", document.getElementById("labelBefore").value);
     formData.append("label_after", document.getElementById("labelAfter").value);
+    if (window.i18n && window.i18n.currentLang) formData.append("language", window.i18n.currentLang);
     if (currentUser && currentUser.id) formData.append("user_id", currentUser.id);
 
     document.getElementById("compareBtn").disabled = true;
@@ -3676,7 +3873,7 @@
     }
   });
 
-  let lastCompareResult = null;
+  lastCompareResult = null;
 
   function renderCompare(data) {
     lastCompareResult = data;
@@ -3750,8 +3947,8 @@
   }
 
   // ---------- Cross-Modal tab (Optical + SAR) ----------
-  let opticalFile = null;
-  let sarFile = null;
+  opticalFile = null;
+  sarFile = null;
 
   wireDrop("fileOptical", "dropzoneOpticalContent", (f) => (opticalFile = f));
   wireDrop("fileSar", "dropzoneSarContent", (f) => (sarFile = f));
@@ -3778,6 +3975,7 @@
       formData.append("optical", opticalFile);
       formData.append("sar", sarFile);
       if (q) formData.append("question", q);
+      if (window.i18n && window.i18n.currentLang) formData.append("language", window.i18n.currentLang);
       if (currentUser && currentUser.id) formData.append("user_id", currentUser.id);
 
       crossmodalBtn.disabled = true;
@@ -3803,7 +4001,7 @@
     });
   }
 
-  let lastCrossmodalResult = null;
+  lastCrossmodalResult = null;
 
   function renderCrossModal(data) {
     lastCrossmodalResult = data;
@@ -3906,6 +4104,14 @@
         </div>
       </div>
     `;
+  }
+
+  // Initialize Multilingual i18n Engine & Voice Input
+  if (window.i18n) {
+    window.i18n.init().then(() => {
+      window.i18n.createLanguageSelector("langSelectorContainer");
+      window.i18n.setupSpeechInput("voiceBtn", "questionInput");
+    });
   }
 
   loadHistory();

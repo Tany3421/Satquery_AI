@@ -16,6 +16,10 @@ from .tool_registry import (
     TASK_SINGLE_VQA,
     TASK_TEXT_GROUNDING,
 )
+try:
+    from .multilingual import normalize_query, detect_language
+except ImportError:
+    from multilingual import normalize_query, detect_language
 
 
 GROUNDING_KEYWORDS = [
@@ -30,6 +34,8 @@ GROUNDING_KEYWORDS = [
     r"\bmark the\b",
     r"\bdetect\b",
     r"\bgrounding\b",
+    # Indic grounding & localization keywords
+    r"(खोजें|शोधा|दिखाएं|दाखवा|கண்டுபிடி|గుర్తించు|খুঁজুন|શોધો|ಹುಡುಕಿ|കണ്ടെത്തുക|ਲੱਭੋ|चिह्नित|ஹைலைட்)",
 ]
 
 CAPTIONING_KEYWORDS = [
@@ -41,6 +47,8 @@ CAPTIONING_KEYWORDS = [
     r"\bland[- ]cover breakdown\b",
     r"\bwhat does this scene contain\b",
     r"\bgeneral description\b",
+    # Indic captioning & breakdown keywords
+    r"(वर्णन|विवरण|माहिती|വിளக்கு|వివరించు|বর্ণনা|વર્ણન|ವಿವರಿಸಿ|വിവരിക്കുക|ਵੇਰਵਾ|भू[- ]आवरण|भू[- ]आच्छादन)",
 ]
 
 CHANGE_KEYWORDS = [
@@ -53,6 +61,8 @@ CHANGE_KEYWORDS = [
     r"\bover time\b",
     r"\bincreased or decreased\b",
     r"\bexpansion\b",
+    # Indic change keywords
+    r"(बदलाव|बदल|फरक|மாற்றம்|మార్పులు|మార్పు|পরিবর্তন|ફેરફાર|ಬದಲಾವಣೆ|വ്യതിയാനങ്ങൾ|മാറ്റങ്ങൾ|ਤਬਦੀਲੀ|ਬਦਲਾਅ|विस्तार|वाढ|पसਾਰ)",
 ]
 
 CROSSMODAL_KEYWORDS = [
@@ -66,6 +76,8 @@ CROSSMODAL_KEYWORDS = [
     r"\bbackscatter and spectral\b",
     r"\bcross[- ]modal\b",
     r"\bjoint\b",
+    # Indic crossmodal keywords
+    r"(ऑप्टिकल और रडार|ऑप्टिकल आणि रडार|ಆಪ್ಟಿಕಲ್ ಮತ್ತು ರಾಡಾರ್|ஒளியியல் மற்றும் ரேடார்|ఆప్టికల్ మరియు రాడార్|অপটিক্যাল ও রাডার)",
 ]
 
 
@@ -74,10 +86,11 @@ def classify_task(
     input_config: Dict[str, Any],
 ) -> Tuple[str, float, str]:
     """
-    Interprets the user's natural language query and input configuration.
+    Interprets the user's natural language query and input configuration,
+    supporting both English and multilingual Indic inputs.
 
     Args:
-        query: User question or natural language instruction.
+        query: User question or natural language instruction in any supported language.
         input_config: Dict with metadata like:
             - image_count: int (1 or 2)
             - input_mode: str ("single", "bitemporal", "crossmodal", or "auto")
@@ -86,7 +99,9 @@ def classify_task(
     Returns:
         tuple (selected_task, confidence_score, classification_rationale)
     """
-    q_lower = (query or "").lower().strip()
+    raw_query = (query or "").strip()
+    norm_query, lang, _ = normalize_query(raw_query)
+    q_lower = f"{raw_query.lower()} {norm_query.lower()}"
     image_count = input_config.get("image_count", 1)
     input_mode = input_config.get("input_mode", "auto")
     modalities = [m.lower() for m in input_config.get("modalities", [])]

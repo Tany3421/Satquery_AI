@@ -4,11 +4,15 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>SatQuery AI · Global Satellite Location Explorer & VLM Intelligence</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛰️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Tamil:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;700&family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Sans+Gujarati:wght@400;600;700&family=Noto+Sans+Kannada:wght@400;600;700&family=Noto+Sans+Malayalam:wght@400;600;700&family=Noto+Sans+Gurmukhi:wght@400;600;700&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
 <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="locales_bundle.js"></script>
+<script src="i18n.js"></script>
 
 <script>
   (function() {
@@ -125,9 +129,9 @@
     align-items: center;
     justify-content: center;
     border-radius: 10px;
-    background: linear-gradient(135deg, rgba(0, 217, 255, 0.18), rgba(139, 124, 255, 0.22));
-    border: 1px solid rgba(0, 217, 255, 0.35);
-    box-shadow: 0 0 14px rgba(0, 217, 255, 0.25);
+    background: var(--bg-card);
+    border: 1px solid var(--panel-line);
+    box-shadow: var(--shadow-sm);
   }
   .brand-title {
     font-size: 15px;
@@ -832,27 +836,26 @@
     <div class="brand-icon">🛰️</div>
     <div>
       <div class="brand-title">
-        SatQuery AI <span style="color:var(--primary);">Location Explorer</span>
+        SatQuery AI <span style="color:var(--primary);" data-i18n="loc_title">Location Explorer</span>
         <div class="status-dot" title="Live Geospatial Engine Operational"></div>
       </div>
-      <div class="brand-subtitle">Gemini 2.0 Flash · Interactive Earth Observation</div>
+      <div class="brand-subtitle" data-i18n="loc_subtitle">Gemini 2.0 Flash · Interactive Earth Observation</div>
     </div>
   </div>
 
   <div class="header-actions">
     <!-- Return to Main VQA Studio -->
-    <a href="index.html" class="btn-outline" title="Return to SatQuery AI Primary Studio">
+    <a href="index.html" class="btn-outline" title="Return to SatQuery AI Primary Studio" data-i18n="home_studio">
       <span>←</span> Home Studio
     </a>
 
     <!-- Theme Toggle -->
     <button type="button" class="btn-outline" id="themeBtn" onclick="toggleTheme()" title="Toggle Light / Dark Interface">
-      🌓 Theme
+      <span data-i18n="theme_toggle">🌓 Theme</span>
     </button>
 
-    <div class="mono" style="font-size:11px; color:var(--ink-muted); padding:3px 8px; border:1px solid var(--panel-line); border-radius:6px;">
-      SIH26167
-    </div>
+    <!-- Language Selector Container (Top-Right) -->
+    <div id="langSelectorContainer" style="display:inline-flex; align-items:center;"></div>
   </div>
 </header>
 
@@ -873,11 +876,16 @@
           id="locationSearchInput" 
           class="search-input" 
           placeholder="Search any place or coordinates (e.g., Pune, Dubai)..."
+          data-i18n-placeholder="search_placeholder"
           autocomplete="off"
         />
         <button id="clearSearchBtn" class="clear-btn" title="Clear">✕</button>
+        <!-- 🎤 Speech-to-Text Voice Query -->
+        <button type="button" id="locVoiceBtn" class="detect-btn voice-btn" style="cursor:pointer;" title="Voice Search (Click and Speak)" data-i18n-title="voice_tooltip">
+          🎤
+        </button>
         <!-- 📍 Detect Location Target Button -->
-        <button type="button" id="detectLocationBtn" class="detect-btn" title="Detect Current Location (GPS / Network)" onclick="detectCurrentLocation()">
+        <button type="button" id="detectLocationBtn" class="detect-btn" title="Detect Current Location (GPS / Network)" data-i18n-title="detect_tooltip" onclick="detectCurrentLocation()">
           <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="4" stroke-width="2.2"/>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 2v3m0 14v3m10-10h-3M5 12H2"/>
@@ -891,8 +899,8 @@
 
       <!-- Quick Location Presets Chips -->
       <div class="quick-chips">
-        <button class="chip chip-detect" id="chipDetectBtn" onclick="detectCurrentLocation()" title="Auto-detect current GPS/network location">
-          <span>📍</span> Detect My Location
+        <button class="chip chip-detect" id="chipDetectBtn" onclick="detectCurrentLocation()" title="Auto-detect current GPS/network location" data-i18n-title="detect_tooltip">
+          <span>📍</span> <span data-i18n="detect_my_location">Detect My Location</span>
         </button>
         <button class="chip" onclick="flyToPreset('Pune, Maharashtra', 18.5204, 73.8567)">🇮🇳 Pune</button>
         <button class="chip" onclick="flyToPreset('Mumbai Coastal Road', 18.9750, 72.8258)">🏙️ Mumbai</button>
@@ -905,9 +913,9 @@
 
     <!-- Basemap Switcher -->
     <div class="layer-switcher">
-      <button class="layer-btn active" id="layerSat" onclick="switchBaseLayer('satellite')">Satellite</button>
-      <button class="layer-btn" id="layerHybrid" onclick="switchBaseLayer('hybrid')">Hybrid</button>
-      <button class="layer-btn" id="layerStreet" onclick="switchBaseLayer('street')">Streets</button>
+      <button class="layer-btn active" id="layerSat" onclick="switchBaseLayer('satellite')" data-i18n="layer_sat">Satellite</button>
+      <button class="layer-btn" id="layerHybrid" onclick="switchBaseLayer('hybrid')" data-i18n="layer_hybrid">Hybrid</button>
+      <button class="layer-btn" id="layerStreet" onclick="switchBaseLayer('street')" data-i18n="layer_street">Streets</button>
     </div>
 
     <!-- WebGL Map Container -->
@@ -918,7 +926,7 @@
       <span>LAT: <span class="telemetry-val" id="hudLat">18.5204°</span></span>
       <span>LNG: <span class="telemetry-val" id="hudLng">73.8567°</span></span>
       <span>ZOOM: <span class="telemetry-val" id="hudZoom">14.5x</span></span>
-      <span style="color:var(--teal);">3D TERRAIN ON</span>
+      <span style="color:var(--teal);" data-i18n="hud_terrain">3D TERRAIN ON</span>
     </div>
   </div>
 
@@ -926,7 +934,7 @@
   <aside class="intel-panel" id="intelPanel">
     <div class="panel-header">
       <div class="panel-title">
-        <span>🛰️</span> Area Intelligence
+        <span>🛰️</span> <span data-i18n="area_intel">Area Intelligence</span>
       </div>
       <div class="model-badge" id="modelBadge">
         Gemini 2.0 Flash
@@ -939,15 +947,15 @@
         <svg fill="none" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <p style="font-size:13px; font-weight:600; color:var(--ink); margin-bottom:4px;">No Area Selected</p>
-        <p style="font-size:12px; margin:0;">Type a city or click a preset chip to fly to coordinates and synthesize Gemini 2.0 Flash geospatial intelligence.</p>
+        <p style="font-size:13px; font-weight:600; color:var(--ink); margin-bottom:4px;" data-i18n="empty_title">No Area Selected</p>
+        <p style="font-size:12px; margin:0;" data-i18n="empty_desc">Type a city or click a preset chip to fly to coordinates and synthesize Gemini 2.0 Flash geospatial intelligence.</p>
       </div>
 
       <!-- Loading State -->
       <div class="loading-card" id="loadingCard" style="display:none;">
         <div class="pulse-spinner"></div>
-        <div style="font-size:13px; font-weight:700; color:var(--primary);">Analyzing Viewport Raster...</div>
-        <div style="font-size:11px; color:var(--ink-dim); font-family:'JetBrains Mono';">Querying Gemini 2.0 Flash Earth Observation Engine</div>
+        <div style="font-size:13px; font-weight:700; color:var(--primary);" data-i18n="analyzing_title">Analyzing Viewport Raster...</div>
+        <div style="font-size:11px; color:var(--ink-dim); font-family:'JetBrains Mono';" data-i18n="analyzing_desc">Querying Gemini 2.0 Flash Earth Observation Engine</div>
       </div>
 
       <!-- Report Container -->
@@ -959,19 +967,19 @@
           </div>
           <div class="loc-meta-grid">
             <div class="loc-meta-item">
-              <div class="loc-meta-k">COORDINATES</div>
+              <div class="loc-meta-k" data-i18n="meta_coords">COORDINATES</div>
               <div class="loc-meta-v" id="metaCoords">0.0000°, 0.0000°</div>
             </div>
             <div class="loc-meta-item">
-              <div class="loc-meta-k">BOUNDING BOX</div>
+              <div class="loc-meta-k" data-i18n="meta_bbox">BOUNDING BOX</div>
               <div class="loc-meta-v" id="metaBbox">Calculating...</div>
             </div>
             <div class="loc-meta-item">
-              <div class="loc-meta-k">LATENCY</div>
+              <div class="loc-meta-k" data-i18n="meta_latency">LATENCY</div>
               <div class="loc-meta-v" id="metaLatency">~280ms</div>
             </div>
             <div class="loc-meta-item">
-              <div class="loc-meta-k">SENSOR BANDS</div>
+              <div class="loc-meta-k" data-i18n="meta_sensors">SENSOR BANDS</div>
               <div class="loc-meta-v" style="color:var(--teal);">S2 MSI + S1 SAR</div>
             </div>
           </div>
@@ -982,9 +990,9 @@
 
         <!-- ISRO Report Actions -->
         <div style="display:flex; gap:8px; margin-top:16px; margin-bottom:12px; flex-wrap:wrap; border-top:1px solid var(--panel-line); padding-top:12px;">
-          <button type="button" class="btn-primary" onclick="window.print()" style="font-size:11px; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;">🖨️ Print ISRO Dossier</button>
-          <button type="button" class="btn-outline" onclick="exportLocationJson()" style="font-size:11px; padding:6px 12px; border-radius:6px; cursor:pointer;">📥 Export JSON</button>
-          <button type="button" class="btn-outline" onclick="copyLocationReport()" style="font-size:11px; padding:6px 12px; border-radius:6px; cursor:pointer;">📋 Copy Summary</button>
+          <button type="button" class="btn-primary" onclick="window.print()" style="font-size:11px; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;" data-i18n="print_dossier">🖨️ Print ISRO Dossier</button>
+          <button type="button" class="btn-outline" onclick="exportLocationJson()" style="font-size:11px; padding:6px 12px; border-radius:6px; cursor:pointer;" data-i18n="export_json">📥 Export JSON</button>
+          <button type="button" class="btn-outline" onclick="copyLocationReport()" style="font-size:11px; padding:6px 12px; border-radius:6px; cursor:pointer;" data-i18n="copy_summary">📋 Copy Summary</button>
         </div>
       </div>
     </div>
@@ -997,9 +1005,12 @@
           id="followUpInput" 
           class="chat-input" 
           placeholder="Ask about this area (e.g. flood hazard, vegetation density)..."
+          data-i18n-placeholder="followup_placeholder"
           onkeydown="if(event.key==='Enter') submitFollowUpQuery()"
         />
-        <button class="chat-send-btn" onclick="submitFollowUpQuery()">ASK</button>
+        <!-- 🎤 Follow-up Voice Query Button -->
+        <button type="button" id="followUpVoiceBtn" class="chat-send-btn voice-btn" style="background:var(--bg-surface); border:1px solid var(--panel-line); color:var(--ink); font-size:13px; cursor:pointer;" title="Voice Query" data-i18n-title="voice_tooltip">🎤</button>
+        <button class="chat-send-btn" id="askFollowUpBtn" onclick="submitFollowUpQuery()" data-i18n="btn_ask">ASK</button>
       </div>
     </div>
   </aside>
@@ -1399,7 +1410,8 @@
       },
       zoom: Number(zoom || 15.0),
       satellite_image_b64: imageB64,
-      custom_question: customQuestion
+      custom_question: customQuestion,
+      language: (window.i18n && window.i18n.currentLang) || "en"
     };
 
     const controller = new AbortController();
@@ -1489,7 +1501,11 @@
     document.getElementById('metaBbox').textContent = `[${bbox.min_lng.toFixed(2)}, ${bbox.min_lat.toFixed(2)}]`;
     document.getElementById('metaLatency').textContent = `Local Fallback`;
 
-    const fallbackMd = `### 🌍 Macro Geographic Overview
+    let fallbackMd = "";
+    if (window.i18n && typeof window.i18n.getLocationFallback === "function") {
+      fallbackMd = window.i18n.getLocationFallback(name, lat, lng, bbox, map ? map.getZoom() : 15);
+    } else {
+      fallbackMd = `### 🌍 Macro Geographic Overview
 **${name}** is positioned at **${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E**. Bounding envelope spans **[${bbox.min_lng.toFixed(3)}, ${bbox.min_lat.toFixed(3)}]** to **[${bbox.max_lng.toFixed(3)}, ${bbox.max_lat.toFixed(3)}]**.
 
 ### 🏙️ Urban Morphology & Settlement Density
@@ -1504,6 +1520,7 @@ Regional transportation links and municipal connectivity hubs are clearly resolv
 ### 🛰️ Remote Sensing Observations & Sensor Recommendations
 - **Sentinel-2 MSI**: Recommended for continuous NDVI and NDWI vegetation/water classification.
 - **Sentinel-1 SAR**: C-band radar recommended for cloud-penetrating surface roughness monitoring.`;
+    }
 
     document.getElementById('reportMarkdown').innerHTML = marked.parse(fallbackMd);
   }
@@ -1704,6 +1721,22 @@ Regional transportation links and municipal connectivity hubs are clearly resolv
   // Start app on DOMContentLoaded
   window.addEventListener('DOMContentLoaded', () => {
     initMap();
+    if (window.i18n) {
+      window.i18n.init().then(() => {
+        window.i18n.createLanguageSelector("langSelectorContainer");
+        window.i18n.setupSpeechInput("locVoiceBtn", "locationSearchInput");
+        window.i18n.setupSpeechInput("followUpVoiceBtn", "followUpInput");
+      });
+    }
+
+    // Re-synthesize active report when language changed
+    document.addEventListener("satquery:languageChanged", (e) => {
+      const newLang = (e.detail && e.detail.lang) || (window.i18n && window.i18n.currentLang) || "en";
+      console.log("[Location Explorer] Language switched to:", newLang);
+      if (activeLocation && activeBbox && !isAnalyzing) {
+        requestGeospatialAnalysis(activeLocation.name, activeLocation.lat, activeLocation.lng, activeBbox, map ? map.getZoom() : 15);
+      }
+    });
   });
 </script>
 </body>

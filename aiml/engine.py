@@ -10,6 +10,7 @@ import base64
 import json
 import os
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Automatically load backend/.env if available
 try:
@@ -22,7 +23,7 @@ try:
 except ImportError:
     pass
 
-from . import bigearthnet, local_vlm, prompts
+from . import bigearthnet, local_vlm, multilingual, prompts
 
 # Support google-genai (preferred official SDK) and google-generativeai (fallback)
 genai_sdk = None
@@ -241,10 +242,20 @@ def analyze_image(
     mode: str = "general",
     data_source: str = "sentinel2",
     engine_type: str = "auto",
-    raster_meta: dict | None = None
+    raster_meta: dict | None = None,
+    language: str | None = None,
+    normalized_query: str | None = None,
+    normalized_meta: dict | None = None,
 ) -> dict:
     """Single-image analysis: question + data source in, structured answer out."""
     raw_bytes = base64.b64decode(image_b64)
+
+    # Resolve language and normalized query if not supplied
+    if not language:
+        norm_q, det_lang, n_meta = multilingual.normalize_query(question, language)
+        language = det_lang
+        normalized_query = norm_q
+        normalized_meta = n_meta
 
     # Pre-extract remote-sensing domain features (BigEarthNet-19 & radiometric spectral indices)
     rs_features = bigearthnet.extract_radiometric_features(raw_bytes, raster_meta)
@@ -258,6 +269,9 @@ def analyze_image(
             "indices": rs_features["radiometric_indices"],
             "status": "CALIBRATED_BEN19",
         }
+        res = multilingual.localize_analysis_result(res, language, normalized_meta)
+        res["detected_language"] = language
+        res["normalized_query"] = normalized_query
         return res
 
     # 2. Check for missing SDK or API key and fallback gracefully to local engine
@@ -270,9 +284,17 @@ def analyze_image(
             "indices": rs_features["radiometric_indices"],
             "status": "CALIBRATED_BEN19",
         }
+        res = multilingual.localize_analysis_result(res, language, normalized_meta)
+        res["detected_language"] = language
+        res["normalized_query"] = normalized_query
         return res
 
     system_prompt = prompts.get_system_prompt(mode, data_source)
+    # Inject strict multilingual prompt instructions preserving coordinates, numbers, dates, and satellite identifiers
+    lang_instruction = multilingual.format_multilingual_prompt_instruction(language)
+    if lang_instruction:
+        system_prompt = f"{system_prompt}\n\n{lang_instruction}"
+
     image_bytes, media_type = _optimize_image_bytes(raw_bytes, max_dim=800)
 
     # Enrich prompt with RS domain adaptation & GeoTIFF metadata
@@ -281,8 +303,9 @@ def analyze_image(
         bbox_str = f", Bounding Box: {raster_meta.get('bounding_box')}" if raster_meta.get("bounding_box") else ""
         meta_info = f"\n[Geospatial Raster: {raster_meta.get('bands')} bands, CRS: {raster_meta.get('crs', 'Geospatial')}{bbox_str}]"
 
+    norm_hint = f"\n[Normalized Technical Query: {normalized_query}]" if normalized_query and normalized_query != question else ""
     full_question = (
-        f"Question: {question}\n\n"
+        f"Question: {question}{norm_hint}\n\n"
         f"{rs_features['domain_summary']}{meta_info}\n\n"
         "Instructions: In your reasoning, explicitly reference the remote-sensing land-cover distribution and spectral radiometry indices provided above to explain your findings."
     )
@@ -318,6 +341,8 @@ def analyze_image(
                 parsed = _parse_json_response(raw_text)
                 parsed["engine_used"] = f"RS-VLM (GeoChat/EarthGPT Adaptation) + Gemini ({model_name})"
                 parsed["data_source"] = data_source
+                parsed["detected_language"] = language
+                parsed["normalized_query"] = normalized_query
 
                 # Ensure BigEarthNet-19 land cover and radiometric indices are grounded
                 if not parsed.get("land_cover"):
@@ -366,11 +391,24 @@ def analyze_image(
                     time.sleep(1)
                     continue
     # Graceful fallback to offline local RS adapter if cloud models fail or network drops
-    return local_vlm.run_local_vlm_adapter(raw_bytes, question, mode=mode, raster_meta=raster_meta)
+    res = local_vlm.run_local_vlm_adapter(raw_bytes, question, mode=mode, raster_meta=raster_meta)
+    res = multilingual.localize_analysis_result(res, language, normalized_meta)
+    res["detected_language"] = language
+    res["normalized_query"] = normalized_query
+    return res
 
 
-def run_groq_fast_query(question: str, context: str = "") -> dict:
+def run_groq_fast_query(question: str, context: str = "", language: str | None = None) -> dict:
     """Fast text-only query engine using Groq API with fallback to Gemini."""
+    if not language:
+        _, det_lang, _ = multilingual.normalize_query(question, language)
+        language = det_lang
+
+    fast_sys = prompts.FAST_QUERY_SYSTEM_PROMPT
+    lang_inst = multilingual.format_multilingual_prompt_instruction(language)
+    if lang_inst:
+        fast_sys = f"{fast_sys}\n\n{lang_inst}"
+
     groq_key = os.environ.get("GROQ_API_KEY")
     if groq_key and not groq_key.startswith("your_"):
         try:
@@ -382,7 +420,7 @@ def run_groq_fast_query(question: str, context: str = "") -> dict:
                 json={
                     "model": "llama-3.3-70b-versatile",
                     "messages": [
-                        {"role": "system", "content": prompts.FAST_QUERY_SYSTEM_PROMPT},
+                        {"role": "system", "content": fast_sys},
                         {"role": "user", "content": prompt_input}
                     ],
                     "temperature": 0.3
@@ -395,7 +433,8 @@ def run_groq_fast_query(question: str, context: str = "") -> dict:
                     "answer": content,
                     "engine_used": "Groq API (llama-3.3-70b-versatile)",
                     "speed": "Ultra-Fast (<500ms)",
-                    "status": "success"
+                    "status": "success",
+                    "detected_language": language,
                 }
         except Exception:
             pass
@@ -412,7 +451,7 @@ def run_groq_fast_query(question: str, context: str = "") -> dict:
             try:
                 if genai_sdk == "google-genai":
                     client = _get_genai_client(api_key)
-                    config = _get_generate_config(prompts.FAST_QUERY_SYSTEM_PROMPT)
+                    config = _get_generate_config(fast_sys)
                     response = client.models.generate_content(
                         model=model_name,
                         contents=[prompt_input],
@@ -423,7 +462,7 @@ def run_groq_fast_query(question: str, context: str = "") -> dict:
                     genai_legacy.configure(api_key=api_key)
                     model = genai_legacy.GenerativeModel(
                         model_name=model_name,
-                        system_instruction=prompts.FAST_QUERY_SYSTEM_PROMPT,
+                        system_instruction=fast_sys,
                     )
                     response = model.generate_content(prompt_input)
                     raw_text = response.text
@@ -431,7 +470,8 @@ def run_groq_fast_query(question: str, context: str = "") -> dict:
                     "answer": raw_text,
                     "engine_used": f"Gemini API ({model_name})",
                     "speed": "Fast",
-                    "status": "success"
+                    "status": "success",
+                    "detected_language": language,
                 }
             except Exception as exc:
                 last_error = exc
@@ -453,12 +493,28 @@ def compare_images(
     label_after: str = "",
     change_stats: dict | None = None,
     question: str = "",
+    language: str | None = None,
+    normalized_query: str | None = None,
+    normalized_meta: dict | None = None,
 ) -> dict:
     """Two-image change detection / CDVQA anomaly flagging grounded in difference engine metrics."""
     raw_before = base64.b64decode(before_b64)
     raw_after = base64.b64decode(after_b64)
     before_bytes, before_media_type = _optimize_image_bytes(raw_before, max_dim=1024)
     after_bytes, after_media_type = _optimize_image_bytes(raw_after, max_dim=1024)
+
+    # Detect language if not provided
+    if not language:
+        q_det = question or label_before or label_after or ""
+        norm_q, det_lang, n_meta = multilingual.normalize_query(q_det, language)
+        language = det_lang
+        normalized_query = norm_q
+        normalized_meta = n_meta
+
+    comp_system_prompt = prompts.COMPARISON_SYSTEM_PROMPT
+    lang_inst = multilingual.format_multilingual_prompt_instruction(language)
+    if lang_inst:
+        comp_system_prompt = f"{comp_system_prompt}\n\n{lang_inst}"
 
     label_text = ""
     if label_before or label_after:
@@ -476,7 +532,8 @@ def compare_images(
             "Instructions: You MUST strictly ground your change narrative and CDVQA answer in these calculated quantitative metrics."
         )
 
-    q_text = f"\nSpecific Question: {question}" if question else ""
+    norm_hint = f"\n[Normalized Technical Query: {normalized_query}]" if normalized_query and normalized_query != question else ""
+    q_text = f"\nSpecific Question: {question}{norm_hint}" if question else ""
     prompt_text = f"Compare these.{label_text}{stats_text}{q_text}"
 
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
@@ -496,7 +553,7 @@ def compare_images(
                             types.Part.from_bytes(data=after_bytes, mime_type=after_media_type),
                             prompt_text,
                         ]
-                        config = _get_generate_config(prompts.COMPARISON_SYSTEM_PROMPT, response_mime_type="application/json")
+                        config = _get_generate_config(comp_system_prompt, response_mime_type="application/json")
                         response = client.models.generate_content(
                             model=model_name,
                             contents=contents,
@@ -507,7 +564,7 @@ def compare_images(
                         genai_legacy.configure(api_key=api_key)
                         model = genai_legacy.GenerativeModel(
                             model_name=model_name,
-                            system_instruction=prompts.COMPARISON_SYSTEM_PROMPT,
+                            system_instruction=comp_system_prompt,
                             generation_config={"response_mime_type": "application/json"},
                         )
                         contents = [
@@ -521,6 +578,8 @@ def compare_images(
                         raw_text = response.text
                     parsed = _parse_json_response(raw_text)
                     parsed["engine_used"] = f"Gemini API ({model_name}) + CDVQA DiffEngine"
+                    parsed["detected_language"] = language
+                    parsed["normalized_query"] = normalized_query
                     return parsed
                 except Exception:
                     if attempt == 0:
@@ -533,7 +592,7 @@ def compare_images(
     chg_pct = change_stats.get("total_changed_pixel_pct", 0) if change_stats else 0
     anomaly = change_stats.get("anomaly_detected", False) if change_stats else False
     hotspots = len(change_stats.get("hotspots", [])) if change_stats else 0
-    return {
+    res = {
         "narrative": (
             f"Bi-temporal difference analysis identified {chg_pct}% pixel-level spatial transitions "
             f"between observation dates with {hotspots} localized change hotspot(s). "
@@ -541,17 +600,20 @@ def compare_images(
         ),
         "changes": [
             {
-                "feature": "Surface alteration",
-                "confidence": 88 if anomaly else 72,
-                "change_type": "modification" if anomaly else "minor_radiometric_shift",
-                "area_pct": chg_pct,
+                "category": "Built-up area" if anomaly else "Vegetation",
+                "direction": "increase" if anomaly else "decrease",
+                "estimated_percent_change": chg_pct,
             }
         ],
         "anomaly_flagged": anomaly,
         "anomaly_reason": "High-intensity localized spatial shift detected by temporal diff engine." if anomaly else "",
         "confidence": 85,
         "engine_used": "CDVQA-Temporal-DiffEngine (RS-Adapted)",
+        "detected_language": language,
+        "normalized_query": normalized_query,
     }
+    res = multilingual.localize_analysis_result(res, language, normalized_meta)
+    return res
 
 
 def analyze_crossmodal_pair(
@@ -562,6 +624,9 @@ def analyze_crossmodal_pair(
     question: str = "",
     optical_meta: dict | None = None,
     sar_meta: dict | None = None,
+    language: str | None = None,
+    normalized_query: str | None = None,
+    normalized_meta: dict | None = None,
 ) -> dict:
     """Co-registered Optical + SAR joint reasoning analysis grounded in sensor radiometry."""
     raw_optical = base64.b64decode(optical_b64)
@@ -569,6 +634,18 @@ def analyze_crossmodal_pair(
 
     opt_bytes, opt_media = _optimize_image_bytes(raw_optical, max_dim=1024)
     sar_bytes, sar_media = _optimize_image_bytes(raw_sar, max_dim=1024)
+
+    # Detect language if not provided
+    if not language:
+        norm_q, det_lang, n_meta = multilingual.normalize_query(question, language)
+        language = det_lang
+        normalized_query = norm_q
+        normalized_meta = n_meta
+
+    cm_system_prompt = prompts.CROSSMODAL_SYSTEM_PROMPT
+    lang_inst = multilingual.format_multilingual_prompt_instruction(language)
+    if lang_inst:
+        cm_system_prompt = f"{cm_system_prompt}\n\n{lang_inst}"
 
     # Pre-extract dual-sensor domain evidence
     fusion_data = bigearthnet.extract_crossmodal_fusion_evidence(
@@ -583,8 +660,9 @@ def analyze_crossmodal_pair(
     if sar_meta and sar_meta.get("is_geotiff"):
         meta_note += f"\n[SAR GeoTIFF: {sar_meta.get('bands')} band(s) (amplitude/backscatter), CRS: {sar_meta.get('crs', 'WGS84')}]"
 
+    norm_hint = f"\n[Normalized Technical Query: {normalized_query}]" if normalized_query and normalized_query != question else ""
     user_prompt = (
-        f"Question: {query_str}\n\n"
+        f"Question: {query_str}{norm_hint}\n\n"
         f"{fusion_data['fusion_summary']}{meta_note}\n\n"
         "Instructions: Explicitly synthesize both the Optical spectral reflectance and SAR microwave backscatter evidence in your answer."
     )
@@ -606,7 +684,7 @@ def analyze_crossmodal_pair(
                             types.Part.from_bytes(data=sar_bytes, mime_type=sar_media),
                             user_prompt,
                         ]
-                        config = _get_generate_config(prompts.CROSSMODAL_SYSTEM_PROMPT, response_mime_type="application/json")
+                        config = _get_generate_config(cm_system_prompt, response_mime_type="application/json")
                         response = client.models.generate_content(
                             model=model_name,
                             contents=contents,
@@ -617,7 +695,7 @@ def analyze_crossmodal_pair(
                         genai_legacy.configure(api_key=api_key)
                         model = genai_legacy.GenerativeModel(
                             model_name=model_name,
-                            system_instruction=prompts.CROSSMODAL_SYSTEM_PROMPT,
+                            system_instruction=cm_system_prompt,
                             generation_config={"response_mime_type": "application/json"},
                         )
                         contents = [
@@ -632,6 +710,8 @@ def analyze_crossmodal_pair(
 
                     parsed = _parse_json_response(raw_text)
                     parsed["engine_used"] = f"EarthGPT / Dedicated Optical+SAR Fusion + Gemini ({model_name})"
+                    parsed["detected_language"] = language
+                    parsed["normalized_query"] = normalized_query
                     parsed["crossmodal_fusion"] = {
                         "cloud_penetrated": fusion_data["cloud_penetrated"],
                         "optical_cloud_percent": fusion_data["optical_cloud_percent"],
@@ -673,7 +753,7 @@ def analyze_crossmodal_pair(
     # Robust local RS-adapted Cross-Modal fallback
     opt_indices = fusion_data["optical_features"]["radiometric_indices"]
     sar_stats = fusion_data["sar_features"]
-    return {
+    res = {
         "answer": (
             f"Cross-modal analysis between optical reflectance and SAR microwave backscatter "
             f"confirms complementary sensing. {'SAR microwave successfully penetrated atmospheric cloud/haze to resolve ground structures.' if fusion_data['cloud_penetrated'] else 'Dual-sensor alignment verified surface features.'} "
@@ -689,6 +769,8 @@ def analyze_crossmodal_pair(
         "evidence": ["Optical spectral reflectance", "SAR microwave double-bounce"],
         "confidence": 88,
         "engine_used": "Cartosat-RISAT-CrossModal-Fusion (RS-Adapted)",
+        "detected_language": language,
+        "normalized_query": normalized_query,
         "crossmodal_fusion": {
             "cloud_penetrated": fusion_data["cloud_penetrated"],
             "optical_cloud_percent": fusion_data["optical_cloud_percent"],
@@ -696,6 +778,8 @@ def analyze_crossmodal_pair(
             "optical_features": opt_indices,
         },
     }
+    res = multilingual.localize_analysis_result(res, language, normalized_meta)
+    return res
 
 
 LOCATION_ANALYSIS_SYSTEM_PROMPT = """You are SatQuery AI's elite Earth Observation and Geospatial Intelligence reasoning engine.
@@ -728,11 +812,15 @@ def analyze_location_area(
     zoom: float = 15.0,
     image_bytes: bytes | None = None,
     custom_question: str | None = None,
+    language: Optional[str] = None,
 ) -> dict:
     """
     Analyzes a geographic target and its satellite imagery bounding box using Gemini 2.0 Flash VLM.
     Returns structured markdown report and spatial metadata tags.
     """
+    if not language and custom_question:
+        language = multilingual.detect_language(custom_question)
+    language = language or "en"
     min_lng = bbox.get("min_lng", lng - 0.02)
     min_lat = bbox.get("min_lat", lat - 0.02)
     max_lng = bbox.get("max_lng", lng + 0.02)
@@ -749,6 +837,9 @@ def analyze_location_area(
         prompt_lines.append(f"Specific Analyst Inquiry: {user_query}")
     else:
         prompt_lines.append("Perform a complete remote-sensing environmental, urban, and infrastructural assessment.")
+
+    if language and language != "en":
+        prompt_lines.append(multilingual.format_location_multilingual_prompt_instruction(language))
 
     prompt_text = "\n".join(prompt_lines)
 
@@ -796,6 +887,7 @@ def analyze_location_area(
                             "markdown_report": raw_text.strip(),
                             "model_used": f"Gemini 2.0 Flash ({model_name})",
                             "status": "success",
+                            "detected_language": language,
                             "geographic_features": ["Geomorphological Basin", "Terrain Elevation Profile"],
                             "urban_density": "Evaluated via Viewport Density",
                             "environmental_context": "Multispectral Canopy & Soil Dynamics",
@@ -811,29 +903,20 @@ def analyze_location_area(
         pass
 
     # Intelligent contextual fallback when API key is missing or offline
-    hemisphere_ns = "Northern" if lat >= 0 else "Southern"
-    hemisphere_ew = "Eastern" if lng >= 0 else "Western"
-    fallback_markdown = f"""### 🌍 Macro Geographic Overview
-**{location_name}** is situated at **{abs(lat):.4f}° {'N' if lat>=0 else 'S'}, {abs(lng):.4f}° {'E' if lng>=0 else 'W'}** in the {hemisphere_ns}-{hemisphere_ew} hemisphere. The bounding envelope spanning `[{min_lng:.4f}, {min_lat:.4f}]` to `[{max_lng:.4f}, {max_lat:.4f}]` exhibits terrain characteristic of its regional physiography, with localized drainage networks and transitional soil gradients.
-
-### 🏙️ Urban Morphology & Settlement Density
-At zoom level {zoom:.1f}, spatial layout indicates built-up clustering along primary transportation corridors. Impervious surfaces, structural footprints, and commercial/residential parcels are aligned with regional urban growth patterns.
-
-### 🌿 Environmental Context & Land Cover Dynamics
-Satellite reflectance patterns suggest mixed land-use classification. Vegetated pockets show active chlorophyll absorption, while open pervious surfaces provide vital hydrological infiltration and ecosystem buffering against surface runoff.
-
-### 🏗️ Critical Infrastructure & Transportation
-Transport arteries provide connectivity across the spatial envelope. Surface networks, junction nodes, and municipal utilities show established logistical integration with surrounding regional centers.
-
-### 🛰️ Remote Sensing Observations & Sensor Recommendations
-- **Sentinel-2 MSI**: Recommended for multispectral land-cover mapping using **B8 (NIR)** and **B4 (Red)** for NDVI vegetation tracking.
-- **Sentinel-1 SAR**: C-band VV/VH backscatter recommended for all-weather surface roughness and moisture detection.
-- **Landsat 9 TIRS**: Thermal infrared band 10 for monitoring urban heat island (UHI) intensity across this footprint."""
+    fallback_markdown = multilingual.get_localized_location_fallback(
+        location_name=location_name,
+        lat=lat,
+        lng=lng,
+        bbox=bbox,
+        zoom=zoom,
+        target_lang=language or "en",
+    )
 
     return {
         "markdown_report": fallback_markdown,
         "model_used": "SatQuery-Geospatial-Engine (Contextual VLM Fallback)",
         "status": "fallback",
+        "detected_language": language,
         "geographic_features": ["Regional Physiographic Zone", "Hydrological Drainage"],
         "urban_density": "Mixed Urban/Peri-Urban Footprint",
         "environmental_context": "Chlorophyll Active Vegetation & Permeable Soils",

@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from . import change_engine, engine
 from .highlight_router import classify_highlight_subtask
+from .multilingual import normalize_query, detect_language
 from .specialists import grounding
 from .task_classifier import classify_task
 from .tool_registry import (
@@ -151,7 +152,10 @@ class AgenticOrchestrator:
         start_time = time.time()
         exec_id = f"exec-{uuid.uuid4().hex[:8]}"
 
-        # 1. Task Classification & Interpretation
+        # 1. Multilingual Interpretation & Task Classification
+        preferred_lang = (task_parameters or {}).get("language")
+        norm_query, detected_lang, lang_meta = normalize_query(query, preferred_lang)
+
         input_config = {
             "image_count": len(images),
             "input_mode": input_mode,
@@ -197,8 +201,11 @@ class AgenticOrchestrator:
                     data_source=ds,
                     engine_type=eng_type,
                     raster_meta=r_meta,
+                    language=detected_lang,
+                    normalized_query=norm_query,
+                    normalized_meta=lang_meta,
                 )
-                result["feature_masks"] = grounding.format_grounding_masks(result.get("feature_masks"), query)
+                result["feature_masks"] = grounding.format_grounding_masks(result.get("feature_masks"), norm_query or query)
 
             elif task == TASK_BITEMPORAL_CHANGE:
                 img_before, img_after = images[0], images[1]
@@ -227,6 +234,9 @@ class AgenticOrchestrator:
                     label_after=lbl_a,
                     change_stats=change_stats,
                     question=query,
+                    language=detected_lang,
+                    normalized_query=norm_query,
+                    normalized_meta=lang_meta,
                 )
                 if heatmap_png:
                     result["heatmap_png_bytes"] = heatmap_png
@@ -250,9 +260,16 @@ class AgenticOrchestrator:
                     question=query,
                     optical_meta=opt_img.get("raster_meta"),
                     sar_meta=sar_img.get("raster_meta"),
+                    language=detected_lang,
+                    normalized_query=norm_query,
+                    normalized_meta=lang_meta,
                 )
             else:
                 raise OrchestratorError(f"Unhandled execution flow for task '{task}'.")
+
+            result["detected_language"] = detected_lang
+            result["normalized_query"] = norm_query
+            result["original_query"] = query
 
         except Exception as exc:
             raise OrchestratorError(f"Execution failed in specialist '{tool_name}': {exc}")

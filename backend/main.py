@@ -98,6 +98,9 @@ app.add_middleware(
 )
 
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+LOCALES_DIR = PROJECT_ROOT / "frontend" / "locales"
+if LOCALES_DIR.exists():
+    app.mount("/locales", StaticFiles(directory=str(LOCALES_DIR)), name="locales")
 
 
 @app.on_event("startup")
@@ -166,11 +169,14 @@ class QueryResponse(BaseModel):
     raster_meta: Optional[dict] = None
     auditable_trace: Optional[dict] = None
     created_at: str
+    language: Optional[str] = "en"
+    detected_language: Optional[str] = None
 
 
 class FastQueryRequest(BaseModel):
     question: str
     context: Optional[str] = ""
+    language: Optional[str] = None
 
 
 class CompareResponse(BaseModel):
@@ -189,6 +195,8 @@ class CompareResponse(BaseModel):
     spatial_change_stats: Optional[dict] = None
     auditable_trace: Optional[dict] = None
     created_at: str
+    language: Optional[str] = "en"
+    detected_language: Optional[str] = None
 
 
 class CrossModalResponse(BaseModel):
@@ -212,6 +220,8 @@ class CrossModalResponse(BaseModel):
     sar_meta: Optional[dict] = None
     auditable_trace: Optional[dict] = None
     created_at: str
+    language: Optional[str] = "en"
+    detected_language: Optional[str] = None
 
 
 class CoordinatesPayload(BaseModel):
@@ -241,6 +251,7 @@ class AnalyzeLocationRequest(BaseModel):
     zoom: Optional[float] = Field(default=15.0, ge=0.0, le=24.0)
     satellite_image_b64: Optional[str] = Field(default=None, description="Base64 encoded PNG/JPEG of the viewport")
     custom_question: Optional[str] = Field(default=None, description="Follow-up question or custom analysis query")
+    language: Optional[str] = Field(default=None, description="Target language code (e.g. en, hi, mr)")
 
 
 class LocationAnalysisResponse(BaseModel):
@@ -255,6 +266,8 @@ class LocationAnalysisResponse(BaseModel):
     environmental_context: str
     infrastructure_observed: List[str]
     status: str
+    language: Optional[str] = "en"
+    detected_language: Optional[str] = None
 
 
 def _media_type_for(filename: str) -> str:
@@ -419,7 +432,7 @@ def fast_query(req: FastQueryRequest):
     if not req.question or not req.question.strip():
         raise HTTPException(status_code=400, detail="question is required")
     try:
-        res = engine.run_groq_fast_query(req.question.strip(), req.context or "")
+        res = engine.run_groq_fast_query(req.question.strip(), req.context or "", language=req.language)
         return res
     except engine.EngineError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
@@ -460,6 +473,7 @@ async def analyze_location(req: AnalyzeLocationRequest):
             zoom=req.zoom or 15.0,
             image_bytes=image_bytes,
             custom_question=req.custom_question,
+            language=req.language,
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Location analysis engine failure: {str(exc)}")
@@ -478,6 +492,8 @@ async def analyze_location(req: AnalyzeLocationRequest):
         environmental_context=analysis_result.get("environmental_context", "Vegetation & Soil Reflectance"),
         infrastructure_observed=analysis_result.get("infrastructure_observed", ["Arterial Roadways"]),
         status=analysis_result.get("status", "success"),
+        language=analysis_result.get("detected_language") or req.language or "en",
+        detected_language=analysis_result.get("detected_language") or req.language,
     )
 
 
@@ -582,6 +598,7 @@ async def analyze(
     user_id: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     image_id: Optional[str] = Form(None),
+    language: Optional[str] = Form(None),
 ):
     if not question or not question.strip():
         raise HTTPException(status_code=400, detail="question is required")
@@ -631,7 +648,7 @@ async def analyze(
             images=images,
             query=question,
             input_mode="single",
-            task_parameters={"mode": mode, "data_source": data_source, "engine_type": engine_type},
+            task_parameters={"mode": mode, "data_source": data_source, "engine_type": engine_type, "language": language},
         )
     except OrchestratorError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
@@ -663,6 +680,8 @@ async def analyze(
         "raster_meta": r_meta,
         "auditable_trace": parsed.get("auditable_trace"),
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "language": parsed.get("detected_language") or language or "en",
+        "detected_language": parsed.get("detected_language") or language,
     }
     db.insert_query(record)
     return record
@@ -675,6 +694,7 @@ async def compare(
     label_before: str = Form(""),
     label_after: str = Form(""),
     user_id: Optional[str] = Form(None),
+    language: Optional[str] = Form(None),
 ):
     """Multi-temporal change detection + anomaly flagging over bi-temporal image pair."""
     before_raw = await before.read()
@@ -693,6 +713,7 @@ async def compare(
             images=images,
             query="What changed between these two observation dates?",
             input_mode="bitemporal",
+            task_parameters={"language": language},
         )
     except OrchestratorError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
@@ -719,6 +740,8 @@ async def compare(
         "spatial_change_stats": parsed.get("spatial_change_stats"),
         "auditable_trace": parsed.get("auditable_trace"),
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "language": parsed.get("detected_language") or language or "en",
+        "detected_language": parsed.get("detected_language") or language,
     }
     db.insert_comparison(record)
     return {**record, "anomaly_reason": parsed.get("anomaly_reason", "")}
@@ -730,6 +753,7 @@ async def crossmodal(
     sar: UploadFile = File(...),
     question: str = Form(""),
     user_id: Optional[str] = Form(None),
+    language: Optional[str] = Form(None),
 ):
     """Co-registered Optical + SAR joint information extraction (Cartosat-2S + RISAT / S2 + S1)."""
     opt_raw = await optical.read()
@@ -748,6 +772,7 @@ async def crossmodal(
             images=images,
             query=question or "Use the optical and SAR images together to identify built-up and water-covered regions.",
             input_mode="crossmodal",
+            task_parameters={"language": language},
         )
     except OrchestratorError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
@@ -773,6 +798,8 @@ async def crossmodal(
         "sar_meta": sar_meta,
         "auditable_trace": parsed.get("auditable_trace"),
         "created_at": datetime.now(timezone.utc).isoformat(),
+        "language": parsed.get("detected_language") or language or "en",
+        "detected_language": parsed.get("detected_language") or language,
     }
     db.insert_crossmodal(record)
     return record
@@ -872,7 +899,7 @@ def clear_history(
 
 @app.get("/api/benchmark")
 def get_benchmark():
-    """Runs the 4-part SIH26167 benchmark evaluation harness (BigEarthNet, RSVQA, VRSBench, CDVQA)."""
+    """Runs the 4-part Remote Sensing benchmark evaluation harness (BigEarthNet, RSVQA, VRSBench, CDVQA)."""
     try:
         import eval.benchmark_harness
         import importlib

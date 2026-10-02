@@ -58,8 +58,9 @@ TOOL_REGISTRY: Dict[str, Dict[str, Any]] = {
         "model_id": "GeoChat / EarthGPT (RS-VLM) + Gemini Synthesizer",
         "supported_tasks": [TASK_SINGLE_VQA, TASK_SCENE_CAPTIONING],
         "permitted_parameters": {
-            "mode": {"type": str, "allowed": ["general", "agriculture", "disaster", "urban", "environment", "segmentation"], "default": "general"},
+            "mode": {"type": str, "allowed": ["general", "agriculture", "disaster", "urban", "environment", "segmentation", "grounding"], "default": "general"},
             "data_source": {"type": str, "allowed": ["sentinel2", "sentinel1", "bhuvan", "fusion"], "default": "sentinel2"},
+            "language": {"type": str, "allowed": ["en", "hi", "mr", "ta", "te", "bn", "gu", "kn", "ml", "pa"], "default": "en"},
             "temperature": {"type": float, "min": 0.0, "max": 1.0, "default": 0.2},
             "max_tokens": {"type": int, "min": 64, "max": 2048, "default": 512},
         },
