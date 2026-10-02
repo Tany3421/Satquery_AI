@@ -327,6 +327,107 @@ def health():
     }
 
 
+@app.get("/api/detect-location")
+def detect_location(request: Request):
+    """
+    Robust server-side IP geolocation detection.
+    Useful when client browser GPS is blocked by insecure HTTP or strict sandbox.
+    """
+    import urllib.request
+    try:
+        req = urllib.request.Request(
+            "https://ipapi.co/json/",
+            headers={"User-Agent": "SatQueryAI/1.0 (Earth Observation Assistant)"}
+        )
+        with urllib.request.urlopen(req, timeout=3.5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            if data.get("latitude") and data.get("longitude"):
+                city = data.get("city") or ""
+                region = data.get("region") or ""
+                country = data.get("country_name") or ""
+                name = ", ".join(filter(None, [city, region, country])) or "Detected Network Region"
+                return {
+                    "success": True,
+                    "latitude": float(data["latitude"]),
+                    "longitude": float(data["longitude"]),
+                    "city": city,
+                    "region": region,
+                    "country": country,
+                    "name": name,
+                    "source": "Server IP Geolocation",
+                }
+    except Exception:
+        pass
+
+    # Secondary server fallback
+    try:
+        req = urllib.request.Request(
+            "https://ipwho.is/",
+            headers={"User-Agent": "SatQueryAI/1.0 (Earth Observation Assistant)"}
+        )
+        with urllib.request.urlopen(req, timeout=3.5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            if data.get("success") and data.get("latitude") and data.get("longitude"):
+                name = ", ".join(filter(None, [data.get("city"), data.get("region"), data.get("country")]))
+                return {
+                    "success": True,
+                    "latitude": float(data["latitude"]),
+                    "longitude": float(data["longitude"]),
+                    "city": data.get("city", ""),
+                    "region": data.get("region", ""),
+                    "country": data.get("country", ""),
+                    "name": name,
+                    "source": "Server IP Geolocation",
+                }
+    except Exception:
+        pass
+
+    # Reliable default regional fallback (Pune, Maharashtra, India)
+    return {
+        "success": True,
+        "latitude": 18.5204,
+        "longitude": 73.8567,
+        "city": "Pune",
+        "region": "Maharashtra",
+        "country": "India",
+        "name": "Pune, Maharashtra, India (Default Hub)",
+        "source": "Regional Default",
+    }
+
+
+@app.get("/api/reverse-geocode")
+def reverse_geocode(lat: float, lng: float):
+    """
+    Server-side reverse geocoding with compliant User-Agent header
+    to prevent client-side Nominatim 403 Forbidden errors.
+    """
+    import urllib.request
+    mb_token = os.getenv("MAPBOX_ACCESS_TOKEN", "").strip()
+    if mb_token and mb_token.startswith("pk."):
+        try:
+            url = f"https://api.mapbox.com/geocoding/v5/mapbox.places/{lng},{lat}.json?access_token={mb_token}&limit=1"
+            req = urllib.request.Request(url, headers={"User-Agent": "SatQueryAI/1.0"})
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                if data.get("features"):
+                    return {"name": data["features"][0].get("place_name")}
+        except Exception:
+            pass
+
+    # Nominatim fallback with compliant User-Agent
+    try:
+        url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lng}"
+        req = urllib.request.Request(url, headers={"User-Agent": "SatQueryAI-EO-Assistant/1.0 (isro-researcher@satquery.ai)"})
+        with urllib.request.urlopen(req, timeout=3.5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            if data.get("display_name"):
+                return {"name": data["display_name"]}
+    except Exception:
+        pass
+
+    return {"name": f"Location ({lat:.4f}°, {lng:.4f}°)"}
+
+
 @app.post("/api/auth/register", response_model=AuthTokenResponse)
 @app.post("/api/auth/signup", response_model=AuthTokenResponse)
 def auth_register(req: UserSignup):

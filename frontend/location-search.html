@@ -845,13 +845,13 @@
 
   <div class="header-actions">
     <!-- Return to Main VQA Studio -->
-    <a href="index.html" class="btn-outline" title="Return to SatQuery AI Primary Studio" data-i18n="home_studio">
+    <a href="index.html" class="btn-outline" title="Return to SatQuery AI Primary Studio" data-i18n="home_studio" data-i18n-keep-icon="←">
       <span>←</span> Home Studio
     </a>
 
     <!-- Theme Toggle -->
     <button type="button" class="btn-outline" id="themeBtn" onclick="toggleTheme()" title="Toggle Light / Dark Interface">
-      <span data-i18n="theme_toggle">🌓 Theme</span>
+      <span data-i18n="theme_toggle" data-i18n-keep-icon="🌓">🌓 Theme</span>
     </button>
 
     <!-- Language Selector Container (Top-Right) -->
@@ -1191,15 +1191,13 @@
   }
 
   // ==========================================
-  // Location Detection (GPS & IP Fallback)
+  // Location Detection (GPS, Secure Context, & Multi-Tier IP Fallback)
   // ==========================================
   async function detectCurrentLocation() {
     const btn = document.getElementById('detectLocationBtn');
     const chip = document.getElementById('chipDetectBtn');
     if (btn) btn.classList.add('detecting');
     if (chip) chip.innerHTML = `<span class="detect-spinner"></span> Detecting...`;
-
-    showToast("📍 Requesting current location...");
 
     async function onLocationFound(lat, lng, source) {
       if (btn) btn.classList.remove('detecting');
@@ -1210,26 +1208,79 @@
       flyToLocation(placeName, lat, lng);
     }
 
-    // 1. Try High-Precision Browser GPS Geolocation
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isSecure = window.isSecureContext || isLocalhost;
+
+    // Notice non-localhost HTTP constraint
+    if (!isSecure) {
+      console.info("[Geo] Insecure HTTP origin detected; bypassing browser GPS directly to network IP detection.");
+      showToast("🌐 Non-HTTPS origin: Auto-resolving location via network IP...");
+      await detectLocationViaMultiTier(onLocationFound, btn, chip);
+      return;
+    }
+
+    showToast("📍 Requesting current location...");
+
+    // 1. Try High-Precision Browser GPS Geolocation if secure
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           onLocationFound(position.coords.latitude, position.coords.longitude, "Device GPS");
         },
         async (error) => {
-          console.warn("GPS Geolocation prompt dismissed or denied, using IP fallback:", error.message);
-          await detectLocationViaIP(onLocationFound, btn, chip);
+          console.warn("[Geo] Browser GPS denied or unavailable:", error.message);
+          showToast("ℹ️ GPS unavailable; switching to network IP location...");
+          await detectLocationViaMultiTier(onLocationFound, btn, chip);
         },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
       );
     } else {
-      await detectLocationViaIP(onLocationFound, btn, chip);
+      await detectLocationViaMultiTier(onLocationFound, btn, chip);
     }
   }
 
-  async function detectLocationViaIP(callback, btn, chip) {
+  async function detectLocationViaMultiTier(callback, btn, chip) {
+    // Tier 1: Query backend API /api/detect-location
     try {
-      const res = await fetch("https://ipwho.is/");
+      const res = await fetch(`${API_BASE}/api/detect-location`, { signal: AbortSignal.timeout(4000) });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.latitude && data.longitude) {
+          const name = data.name || [data.city, data.region, data.country].filter(Boolean).join(", ");
+          if (btn) btn.classList.remove('detecting');
+          if (chip) chip.innerHTML = `<span>📍</span> Detect My Location`;
+          showToast(`📍 Location detected: ${name}`);
+          document.getElementById('locationSearchInput').value = name;
+          flyToLocation(name, data.latitude, data.longitude);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("[Geo Tier 1] Backend detect-location unreachable:", e);
+    }
+
+    // Tier 2: Client-side ipapi.co
+    try {
+      const res = await fetch("https://ipapi.co/json/", { signal: AbortSignal.timeout(3500) });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.latitude && data.longitude) {
+          const name = [data.city, data.region, data.country_name].filter(Boolean).join(", ");
+          if (btn) btn.classList.remove('detecting');
+          if (chip) chip.innerHTML = `<span>📍</span> Detect My Location`;
+          showToast(`📍 Location detected: ${name}`);
+          document.getElementById('locationSearchInput').value = name;
+          flyToLocation(name, data.latitude, data.longitude);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("[Geo Tier 2] ipapi.co failed:", e);
+    }
+
+    // Tier 3: Client-side ipwho.is
+    try {
+      const res = await fetch("https://ipwho.is/", { signal: AbortSignal.timeout(3500) });
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.latitude && data.longitude) {
@@ -1243,18 +1294,24 @@
         }
       }
     } catch (e) {
-      console.warn("IP Geolocation fallback failed:", e);
+      console.warn("[Geo Tier 3] ipwho.is failed:", e);
     }
+
+    // Tier 4: Regional Hub fallback (Pune, Maharashtra)
     if (btn) btn.classList.remove('detecting');
     if (chip) chip.innerHTML = `<span>📍</span> Detect My Location`;
-    showToast("⚠️ Could not detect location. Please search manually.");
+    const defaultName = "Pune, Maharashtra, India (Default Regional Hub)";
+    showToast("📍 Using default regional hub (Pune). Click map or search to reposition.");
+    document.getElementById('locationSearchInput').value = defaultName;
+    flyToLocation(defaultName, 18.5204, 73.8567);
   }
 
   async function reverseGeocode(lat, lng) {
+    // 1. Try Mapbox if token present
     try {
       if (mapboxToken && mapboxToken.startsWith("pk.")) {
         const mbUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&limit=1`;
-        const res = await fetch(mbUrl);
+        const res = await fetch(mbUrl, { signal: AbortSignal.timeout(3000) });
         if (res.ok) {
           const data = await res.json();
           if (data.features && data.features.length > 0) {
@@ -1262,15 +1319,33 @@
           }
         }
       }
+    } catch (e) {
+      console.warn("[Geocode] Mapbox reverse geocode warning:", e);
+    }
+
+    // 2. Try Backend reverse-geocode proxy
+    try {
+      const res = await fetch(`${API_BASE}/api/reverse-geocode?lat=${lat}&lng=${lng}`, { signal: AbortSignal.timeout(3000) });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.name) return data.name;
+      }
+    } catch (e) {
+      console.warn("[Geocode] Backend proxy warning:", e);
+    }
+
+    // 3. Fallback client Nominatim
+    try {
       const nomUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
-      const res = await fetch(nomUrl, { headers: { 'Accept-Language': 'en' } });
+      const res = await fetch(nomUrl, { signal: AbortSignal.timeout(3000) });
       if (res.ok) {
         const data = await res.json();
         if (data.display_name) return data.display_name;
       }
     } catch (e) {
-      console.warn("Reverse geocode failed:", e);
+      console.warn("[Geocode] Nominatim fallback warning:", e);
     }
+
     return `Location (${lat.toFixed(4)}°, ${lng.toFixed(4)}°)`;
   }
 

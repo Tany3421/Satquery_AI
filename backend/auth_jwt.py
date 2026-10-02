@@ -12,10 +12,21 @@ import hashlib
 import json
 import os
 import time
+from pathlib import Path
 from typing import Any, Dict, Optional
 
+# Auto-load environment variables from backend/.env or root .env
+try:
+    from dotenv import load_dotenv
+    _base_dir = Path(__file__).resolve().parent.parent
+    for _p in [_base_dir / "backend" / ".env", _base_dir / ".env"]:
+        if _p.exists():
+            load_dotenv(dotenv_path=_p)
+            break
+except ImportError:
+    pass
 
-JWT_SECRET = os.getenv("JWT_SECRET", "satquery-jwt-secret-key-sih26167-2026")
+JWT_SECRET = os.getenv("JWT_SECRET", "satquery-jwt-super-secret-key-production-2026")
 JWT_ALGORITHM = "HS256"
 DEFAULT_EXPIRY_SECONDS = 7 * 24 * 3600  # 7 days
 

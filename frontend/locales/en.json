@@ -22,10 +22,10 @@
     "language": "🌐 Language"
   },
   "tabs": {
-    "analyze": "🛰️ 01 · Single Image VQA & Grounding",
-    "compare": "⏳ 02 · Bi-Temporal Change Detection",
-    "crossmodal": "📡 03 · Cross-Modal (Optical + SAR)",
-    "location_explorer": "🌍 04 · Live Location Explorer"
+    "analyze": "🛰️ Single Image VQA & Grounding",
+    "compare": "⏳ Bi-Temporal Change Detection",
+    "crossmodal": "📡 Cross-Modal (Optical + SAR)",
+    "location_explorer": "🌍 Live Location Explorer"
   },
   "analyze": {
     "title": "Single Image VQA & Grounding",

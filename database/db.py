@@ -25,6 +25,17 @@ from typing import Any, Dict, List, Optional
 import sqlite3
 from pathlib import Path
 
+# Auto-load environment variables from backend/.env or root .env
+try:
+    from dotenv import load_dotenv
+    _base_dir = Path(__file__).resolve().parent.parent
+    for _p in [_base_dir / "backend" / ".env", _base_dir / ".env"]:
+        if _p.exists():
+            load_dotenv(dotenv_path=_p)
+            break
+except ImportError:
+    pass
+
 MONGO_URI = os.getenv("MONGO_URI") or os.getenv("MONGODB_URI") or "mongodb://localhost:27017/"
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "satquery")
 
@@ -47,7 +58,9 @@ def _get_mongo():
     _mongo_last_check = now
     try:
         import pymongo
-        client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=800, connectTimeoutMS=800)
+        is_remote = not ("localhost" in MONGO_URI or "127.0.0.1" in MONGO_URI)
+        timeout_ms = 4000 if is_remote else 1000
+        client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=timeout_ms, connectTimeoutMS=timeout_ms)
         # Verify server connection
         client.admin.command("ping")
         db = client[MONGO_DB_NAME]
@@ -91,10 +104,41 @@ def init_db():
         # Migrate existing SQLite records if SQLite file exists
         if SQLITE_PATH.exists():
             _migrate_sqlite_to_mongodb(mdb)
+        ensure_default_users()
         return
 
     # Fallback to SQLite if MongoDB daemon is unreachable
     _init_sqlite_fallback()
+    ensure_default_users()
+
+
+def ensure_default_users():
+    """Ensures essential researcher accounts exist if database is fresh/empty."""
+    mdb = _get_mongo()
+    user_count = 0
+    if mdb is not None:
+        try:
+            user_count = mdb.users.count_documents({})
+        except Exception:
+            user_count = 0
+    else:
+        try:
+            conn = sqlite3.connect(SQLITE_PATH)
+            row = conn.execute("SELECT COUNT(*) FROM users").fetchone()
+            user_count = row[0] if row else 0
+            conn.close()
+        except Exception:
+            user_count = 0
+
+    if user_count == 0:
+        import uuid
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat()
+        try:
+            create_user(str(uuid.uuid4()), "demo_researcher", "demo@isro.gov.in", "researcher123", now, role="lead_researcher")
+            create_user(str(uuid.uuid4()), "researcher", "researcher@satquery.ai", "researcher123", now, role="researcher")
+        except Exception:
+            pass
 
 
 def _migrate_sqlite_to_mongodb(mdb):
